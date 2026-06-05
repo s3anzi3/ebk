@@ -14,12 +14,14 @@
     ["receiving_tds", "Rec TD"],
     ["fantasy_points_ppr", "Fantasy (PPR)"],
   ];
-  const REVEALS = 3; // per run, for each of team + season
+  const EXACT_REVEALS = 5; // "reveal exact season" lifelines per run
+  const RANGE_W = 3;       // season range width: 4 inclusive years (e.g. 2015–2018)
+  const MIN_Y = 1999, MAX_Y = 2025;
 
   const S = {
     players: [], byId: new Map(), posIndex: new Map(), notable: [],
     mystery: null, answerId: null, score: 0, best: 0, locked: false,
-    teamLeft: REVEALS, seasonLeft: REVEALS, teamShown: false, seasonShown: false,
+    exactLeft: EXACT_REVEALS, exactShown: false, range: [MIN_Y, MAX_Y],
   };
 
   const fmt = (v, d = 0) => Number(v).toLocaleString("en-US", { maximumFractionDigits: d });
@@ -63,9 +65,16 @@
 
   function newRun() {
     S.score = 0;
-    S.teamLeft = REVEALS; S.seasonLeft = REVEALS;
+    S.exactLeft = EXACT_REVEALS;
     $("#score").textContent = "0";
     nextRound();
+  }
+
+  // A 4-year window guaranteed to contain the true season.
+  function seasonRange(season) {
+    let lo = season - ((Math.random() * (RANGE_W + 1)) | 0);
+    lo = Math.min(Math.max(lo, MIN_Y), MAX_Y - RANGE_W);
+    return [lo, lo + RANGE_W];
   }
 
   function pickOptions(mystery) {
@@ -88,7 +97,8 @@
   function nextRound() {
     S.mystery = rand(S.notable);
     S.answerId = S.mystery.id;
-    S.teamShown = false; S.seasonShown = false;
+    S.exactShown = false;
+    S.range = seasonRange(S.mystery.season);
     S.locked = false;
     S.options = pickOptions(S.mystery);
     render();
@@ -97,8 +107,8 @@
   function render() {
     const m = S.mystery;
     $("#pos-line").textContent = posName(m.pos);
-    $("#season-badge").textContent = S.seasonShown ? m.season : "????";
-    $("#team-line").textContent = S.teamShown ? "Team: " + NFL.name(m.team) + " (" + m.team + ")" : "Team: hidden";
+    $("#team-line").textContent = "Team: " + NFL.name(m.team) + " (" + m.team + ")";
+    $("#season-badge").textContent = S.exactShown ? m.season : `Sometime ${S.range[0]}–${S.range[1]}`;
 
     const rows = [`<div class="s-k">Games</div><div class="s-v">${m.games || "—"}</div>`];
     for (const [k, label] of DISPLAY) {
@@ -108,8 +118,10 @@
     $("#statline").innerHTML = rows.join("");
 
     $("#lifelines").hidden = false;
-    configReveal("#reveal-team", "🏟️", "team", S.teamShown, S.teamLeft);
-    configReveal("#reveal-season", "📅", "season", S.seasonShown, S.seasonLeft);
+    const eb = $("#reveal-exact");
+    if (S.exactShown) { eb.disabled = true; eb.textContent = "🎯 exact season shown"; }
+    else if (S.exactLeft <= 0) { eb.disabled = true; eb.textContent = "🎯 no exact reveals left"; }
+    else { eb.disabled = false; eb.textContent = `🎯 Reveal exact season (${S.exactLeft})`; }
 
     const ol = $("#options");
     ol.innerHTML = "";
@@ -125,20 +137,6 @@
     $("#reveal").hidden = true;
     $("#next-row").hidden = true;
     $("#next-row").innerHTML = "";
-  }
-
-  function configReveal(sel, icon, kind, shown, left) {
-    const b = $(sel);
-    if (shown) {
-      b.disabled = true;
-      b.textContent = `${icon} ${kind} shown`;
-    } else if (left <= 0) {
-      b.disabled = true;
-      b.textContent = `${icon} no ${kind} reveals left`;
-    } else {
-      b.disabled = false;
-      b.textContent = `${icon} Reveal ${kind} (${left})`;
-    }
   }
 
   function guess(id, btn) {
@@ -198,14 +196,9 @@
     return { QB: "Quarterback", RB: "Running Back", FB: "Fullback", HB: "Running Back", WR: "Wide Receiver", TE: "Tight End" }[p] || p;
   }
 
-  $("#reveal-team").addEventListener("click", () => {
-    if (S.locked || S.teamShown || S.teamLeft <= 0) return;
-    S.teamShown = true; S.teamLeft--;
-    render();
-  });
-  $("#reveal-season").addEventListener("click", () => {
-    if (S.locked || S.seasonShown || S.seasonLeft <= 0) return;
-    S.seasonShown = true; S.seasonLeft--;
+  $("#reveal-exact").addEventListener("click", () => {
+    if (S.locked || S.exactShown || S.exactLeft <= 0) return;
+    S.exactShown = true; S.exactLeft--;
     render();
   });
 
