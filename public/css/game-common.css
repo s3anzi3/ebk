@@ -156,6 +156,11 @@
 }
 .gh.corner { background: transparent; border: none; }
 .gh .gh-ic { font-size: 1.2rem; }
+.gh-logo { width: 34px; height: 34px; object-fit: contain; }
+.gh-name { font-size: var(--fs-xs); line-height: 1.1; }
+
+/* small inline team logo used across games */
+.tlogo { width: 18px; height: 18px; object-fit: contain; vertical-align: -4px; }
 .gcell {
   position: relative;
   aspect-ratio: 1;

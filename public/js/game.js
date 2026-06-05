@@ -147,7 +147,8 @@
     panel.classList.remove("result-correct", "result-wrong", "shake");
 
     $(".panel-name", panel).textContent = p.name;
-    $(".panel-meta", panel).textContent = `${p.season} · ${p.team || "—"} · ${p.pos || "—"}`;
+    const logo = (p.team && window.NFL) ? `<img class="tlogo" src="${NFL.logo(p.team)}" alt="" /> ` : "";
+    $(".panel-meta", panel).innerHTML = `${p.season} · ${logo}${p.team || "—"} · ${p.pos || "—"}`;
 
     const img = $(".panel-photo img", panel);
     const bg = $(".panel-bg", panel);

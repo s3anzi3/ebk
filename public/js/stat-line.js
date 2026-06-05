@@ -25,13 +25,17 @@
   const MIN_Y = 1999, MAX_Y = 2025;
 
   const S = {
-    players: [], byId: new Map(), posIndex: new Map(), notable: [],
+    players: [], byId: new Map(), posIndex: new Map(), sideIndex: { off: [], def: [] }, notable: [],
     mystery: null, answerId: null, score: 0, best: 0, locked: false,
     exactLeft: EXACT_REVEALS, exactShown: false, range: [MIN_Y, MAX_Y],
   };
 
   const fmt = (v, d = 0) => Number(v).toLocaleString("en-US", { maximumFractionDigits: d });
   const rand = (a) => a[(Math.random() * a.length) | 0];
+  const take = (a) => a.splice((Math.random() * a.length) | 0, 1)[0];
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const OFF_GRP = new Set(["QB", "RB", "WR", "TE"]);
+  const sideOf = (g) => (OFF_GRP.has(g) ? "off" : "def");
   const getBest = () => { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } };
   const setBest = (v) => { try { localStorage.setItem(BEST_KEY, v); } catch {} };
 
@@ -64,6 +68,8 @@
         S.posIndex.get(grp).add(p.id);
       }
       for (const [grp, set] of S.posIndex) S.posIndex.set(grp, [...set]);
+      S.sideIndex = { off: [], def: [] };
+      for (const b of S.byId.values()) S.sideIndex[sideOf(b.grp)].push(b);
       S.notable = S.players.filter(isNotable);
       S.best = getBest();
       $("#best").textContent = S.best;
@@ -89,21 +95,31 @@
     return [lo, lo + RANGE_W];
   }
 
+  // Options stay on the same side of the ball, drawn from ALL players (not just
+  // notable). Composition: answer + 2 same-position distractors (era-overlapping)
+  // + 1 wildcard of any position from that side. Keeps it from being the easy
+  // "1 QB vs 3 non-QBs" giveaway while adding variety.
   function pickOptions(mystery) {
-    const samePos = (S.posIndex.get(mystery.grp || mystery.pos) || []).map((id) => S.byId.get(id));
-    // prefer players whose careers overlap the mystery's era (+/- 6 yrs)
-    const era = samePos.filter((b) => b.id !== mystery.id &&
-      b.max >= mystery.season - 6 && b.min <= mystery.season + 6);
-    const pool = (era.length >= 3 ? era : samePos.filter((b) => b.id !== mystery.id)).slice();
+    const grp = mystery.grp || mystery.pos;
+    const side = sideOf(grp);
+    const samePos = (S.posIndex.get(grp) || []).map((id) => S.byId.get(id)).filter((b) => b.id !== mystery.id);
+    const era = samePos.filter((b) => b.max >= mystery.season - 6 && b.min <= mystery.season + 6);
+    const samePool = (era.length >= 2 ? era : samePos).slice();
+
     const picks = [];
-    while (picks.length < 3 && pool.length) {
-      const i = (Math.random() * pool.length) | 0;
-      picks.push(pool.splice(i, 1)[0]);
-    }
+    while (picks.length < 2 && samePool.length) picks.push(take(samePool));
+
+    // wildcard: random player, any position, same side
+    const sidePool = (S.sideIndex[side] || []).filter((b) => b.id !== mystery.id && !picks.some((x) => x.id === b.id));
+    if (sidePool.length) picks.push(take(sidePool));
+
+    // top up if a position pool was tiny
+    const fb = samePos.filter((b) => !picks.some((x) => x.id === b.id));
+    while (picks.length < 3 && fb.length) picks.push(take(fb));
+
     const opts = picks.map((b) => ({ id: b.id, name: b.name }));
     opts.push({ id: mystery.id, name: mystery.name });
-    for (let i = opts.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [opts[i], opts[j]] = [opts[j], opts[i]]; }
-    return opts;
+    return shuffle(opts);
   }
 
   function nextRound() {
@@ -119,7 +135,7 @@
   function render() {
     const m = S.mystery;
     $("#pos-line").textContent = posName(m.pos);
-    $("#team-line").textContent = "Team: " + NFL.name(m.team) + " (" + m.team + ")";
+    $("#team-line").innerHTML = `Team: <img class="tlogo" src="${NFL.logo(m.team)}" alt="" /> ${NFL.name(m.team)}`;
     $("#season-badge").textContent = S.exactShown ? m.season : `Sometime ${S.range[0]}–${S.range[1]}`;
 
     const rows = [`<div class="s-k">Games</div><div class="s-v">${m.games || "—"}</div>`];
@@ -191,7 +207,7 @@
       `<div class="pr-meta">${m.season} · ${NFL.name(m.team)} · ${posName(m.pos)}</div>`;
     r.hidden = false;
     $("#season-badge").textContent = m.season;
-    $("#team-line").textContent = "Team: " + NFL.name(m.team) + " (" + m.team + ")";
+    $("#team-line").innerHTML = `Team: <img class="tlogo" src="${NFL.logo(m.team)}" alt="" /> ${NFL.name(m.team)}`;
   }
 
   function addBtn(label, kind, fn) {

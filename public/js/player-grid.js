@@ -142,7 +142,12 @@
     render();
   }
 
-  function critLabel(c) { return c.label + (c.type === "team" ? `<div class="cell-meta">${c.key}</div>` : ""); }
+  function critLabel(c) {
+    if (c.type === "team")
+      return `<img class="gh-logo" src="${NFL.logo(c.key)}" alt="${c.label}" loading="lazy" />` +
+             `<span class="gh-name">${c.label}</span>`;
+    return `<span class="gh-name">${c.label}</span>`;
+  }
 
   function render() {
     const g = $("#grid");

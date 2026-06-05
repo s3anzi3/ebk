@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0a0e1c" />
   <meta name="description" content="EBK — Elite Ball Knowledge. Prove your sports knowledge across a growing arcade of games and compete against other players." />
   <title>EBK — Elite Ball Knowledge</title>
+  <link rel="preconnect" href="https://a.espncdn.com" crossorigin />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/home.css" />
 </head>
@@ -24,6 +25,7 @@
       <h1 class="rise">How <span class="accent">elite</span> is your ball knowledge?</h1>
       <p class="rise d1">A growing arcade of sports games that put your knowledge to the test — build streaks, climb the ranks, and compete against other players. Pick a game below and prove it.</p>
       <a class="hero-cta rise d2" href="/nfl/higher-lower/">🏈 Play NFL Higher / Lower</a>
+      <div class="logo-strip rise d3" id="logo-strip" aria-hidden="true"></div>
     </section>
 
     <div class="wrap">
@@ -93,5 +95,19 @@
        <a href="https://github.com/nflverse/nflverse-data">nflverse</a> (1999–2025)</p>
   </footer>
 
+  <script src="/js/teams.js"></script>
+  <script>
+    (function () {
+      var strip = document.getElementById("logo-strip");
+      if (strip && window.NFL) {
+        NFL.franchises.forEach(function (f) {
+          var img = document.createElement("img");
+          img.src = NFL.logo(f.key); img.alt = f.name; img.loading = "lazy";
+          img.className = "strip-logo";
+          strip.appendChild(img);
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -41,9 +41,16 @@ window.NFL = (function () {
     nameByKey[f.key] = f.name;
     f.abbrs.forEach((a) => (toKey[a] = f.key));
   });
+  // ESPN logo CDN uses lowercase abbreviations; only WAS differs (wsh).
+  const ESPN = { WAS: "wsh" };
+  const keyOf = (abbr) => toKey[abbr] || abbr;
   return {
     franchises: FRANCHISES,
-    keyOf: (abbr) => toKey[abbr] || abbr,
-    name: (abbr) => nameByKey[toKey[abbr] || abbr] || abbr,
+    keyOf,
+    name: (abbr) => nameByKey[keyOf(abbr)] || abbr,
+    logo: (abbr) => {
+      const k = keyOf(abbr);
+      return `https://a.espncdn.com/i/teamlogos/nfl/500/${ESPN[k] || k.toLowerCase()}.png`;
+    },
   };
 })();

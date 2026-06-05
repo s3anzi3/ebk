@@ -72,16 +72,18 @@
     }
   }
 
+  const teamTag = (k) => `<img class="tlogo" src="${NFL.logo(k)}" alt="" /> ${NFL.name(k)}`;
+
   function facts(c) {
     const draft = c.dy
-      ? `${c.dy} · Round ${c.dr || "?"} · Pick ${c.dp || "?"}${c.dt ? " (" + NFL.name(c.dt) + ")" : ""}`
+      ? `${c.dy} · Round ${c.dr || "?"} · Pick ${c.dp || "?"}${c.dt ? " · " + teamTag(c.dt) : ""}`
       : "Undrafted";
     return [
       { icon: "🏈", k: "Position", v: posName(c.pos) },
       { icon: "🎟️", k: "Draft", v: draft },
       { icon: "🎓", k: "College", v: c.college || "Unknown" },
       { icon: "📅", k: "Career", v: `${c.min}–${c.max} · ${c.count} season${c.count > 1 ? "s" : ""}` },
-      { icon: "🧭", k: "Team path", v: c.path.map((k) => NFL.name(k)).join("  →  ") },
+      { icon: "🧭", k: "Team path", v: c.path.map(teamTag).join("  →  ") },
     ];
   }
 
