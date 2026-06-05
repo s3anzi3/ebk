@@ -99,14 +99,20 @@
   <script>
     (function () {
       var strip = document.getElementById("logo-strip");
-      if (strip && window.NFL) {
+      if (!strip || !window.NFL) return;
+      var track = document.createElement("div");
+      track.className = "logo-track";
+      // two identical passes so the -50% marquee loops seamlessly
+      for (var pass = 0; pass < 2; pass++) {
         NFL.franchises.forEach(function (f) {
           var img = document.createElement("img");
           img.src = NFL.logo(f.key); img.alt = f.name; img.loading = "lazy";
           img.className = "strip-logo";
-          strip.appendChild(img);
+          if (pass === 1) img.setAttribute("aria-hidden", "true");
+          track.appendChild(img);
         });
       }
+      strip.appendChild(track);
     })();
   </script>
 </body>

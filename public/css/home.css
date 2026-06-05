@@ -65,20 +65,28 @@
 .hero-cta:hover { transform: translateY(-2px); filter: brightness(1.07); }
 .hero-cta:active { transform: scale(0.97); }
 
-/* team logo strip (single scrollable row) */
+/* team logo strip — continuous infinite marquee (all 32 teams cycling) */
 .logo-strip {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 6px 2px;
+  overflow: hidden;
+  padding: 8px 0;
   margin-top: var(--sp-lg);
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
-.logo-strip::-webkit-scrollbar { display: none; }
-.strip-logo { width: 40px; height: 40px; flex: none; object-fit: contain; opacity: 0.85; transition: transform 0.15s ease, opacity 0.15s ease; }
-.strip-logo:hover { transform: scale(1.18); opacity: 1; }
+.logo-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+.logo-strip:hover .logo-track { animation-play-state: paused; }
+/* margin (not flex gap) so translateX(-50%) loops seamlessly */
+.strip-logo {
+  width: 42px; height: 42px; flex: none; object-fit: contain;
+  margin-right: 30px; opacity: 0.85;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.strip-logo:hover { transform: scale(1.25); opacity: 1; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* sport section */
 .sport { margin: var(--sp-lg) 0; }
