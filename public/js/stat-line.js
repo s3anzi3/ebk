@@ -1,7 +1,7 @@
 /* EBK · Guess the Stat Line — name the player from a mystery season's numbers. */
 (() => {
   "use strict";
-  const BEST_KEY = "ebk_statline_best";
+  const BEST_KEY = "ebk_statline_best_v2"; // v2: score = correct answers (lifeline model)
   const $ = (s, r = document) => r.querySelector(s);
 
   const DISPLAY = [
@@ -14,11 +14,12 @@
     ["receiving_tds", "Rec TD"],
     ["fantasy_points_ppr", "Fantasy (PPR)"],
   ];
-  const PTS = [100, 60, 25]; // by hints used
+  const REVEALS = 3; // per run, for each of team + season
 
   const S = {
     players: [], byId: new Map(), posIndex: new Map(), notable: [],
-    mystery: null, answerId: null, hints: 0, score: 0, best: 0, locked: false,
+    mystery: null, answerId: null, score: 0, best: 0, locked: false,
+    teamLeft: REVEALS, seasonLeft: REVEALS, teamShown: false, seasonShown: false,
   };
 
   const fmt = (v, d = 0) => Number(v).toLocaleString("en-US", { maximumFractionDigits: d });
@@ -60,7 +61,12 @@
     }
   }
 
-  function newRun() { S.score = 0; $("#score").textContent = "0"; nextRound(); }
+  function newRun() {
+    S.score = 0;
+    S.teamLeft = REVEALS; S.seasonLeft = REVEALS;
+    $("#score").textContent = "0";
+    nextRound();
+  }
 
   function pickOptions(mystery) {
     const samePos = (S.posIndex.get(mystery.pos) || []).map((id) => S.byId.get(id));
@@ -82,7 +88,7 @@
   function nextRound() {
     S.mystery = rand(S.notable);
     S.answerId = S.mystery.id;
-    S.hints = 0;
+    S.teamShown = false; S.seasonShown = false;
     S.locked = false;
     S.options = pickOptions(S.mystery);
     render();
@@ -91,8 +97,8 @@
   function render() {
     const m = S.mystery;
     $("#pos-line").textContent = posName(m.pos);
-    $("#season-badge").textContent = S.hints >= 2 ? m.season : "????";
-    $("#team-line").textContent = S.hints >= 1 ? "Team: " + NFL.name(m.team) + " (" + m.team + ")" : "Team: hidden";
+    $("#season-badge").textContent = S.seasonShown ? m.season : "????";
+    $("#team-line").textContent = S.teamShown ? "Team: " + NFL.name(m.team) + " (" + m.team + ")" : "Team: hidden";
 
     const rows = [`<div class="s-k">Games</div><div class="s-v">${m.games || "—"}</div>`];
     for (const [k, label] of DISPLAY) {
@@ -101,9 +107,9 @@
     }
     $("#statline").innerHTML = rows.join("");
 
-    const hb = $("#hint-btn");
-    hb.hidden = S.hints >= 2;
-    hb.textContent = S.hints === 0 ? "Reveal team (−40)" : "Reveal season (−35)";
+    $("#lifelines").hidden = false;
+    configReveal("#reveal-team", "🏟️", "team", S.teamShown, S.teamLeft);
+    configReveal("#reveal-season", "📅", "season", S.seasonShown, S.seasonLeft);
 
     const ol = $("#options");
     ol.innerHTML = "";
@@ -121,6 +127,20 @@
     $("#next-row").innerHTML = "";
   }
 
+  function configReveal(sel, icon, kind, shown, left) {
+    const b = $(sel);
+    if (shown) {
+      b.disabled = true;
+      b.textContent = `${icon} ${kind} shown`;
+    } else if (left <= 0) {
+      b.disabled = true;
+      b.textContent = `${icon} no ${kind} reveals left`;
+    } else {
+      b.disabled = false;
+      b.textContent = `${icon} Reveal ${kind} (${left})`;
+    }
+  }
+
   function guess(id, btn) {
     if (S.locked) return;
     S.locked = true;
@@ -132,17 +152,16 @@
       if (S.options[i].id === S.answerId) b.classList.add("correct");
       else if (b === btn) b.classList.add("wrong");
     });
-    $("#hint-btn").hidden = true;
+    $("#lifelines").hidden = true;
 
     const banner = $("#banner");
     if (correct) {
-      const pts = PTS[Math.min(S.hints, PTS.length - 1)];
-      S.score += pts;
+      S.score += 1;
       const sc = $("#score");
       sc.textContent = S.score;
       sc.classList.remove("pop"); void sc.offsetWidth; sc.classList.add("pop");
       if (S.score > S.best) { S.best = S.score; setBest(S.best); $("#best").textContent = S.best; }
-      banner.textContent = `Correct! +${pts}`;
+      banner.textContent = "Correct!";
       banner.className = "banner good";
       showReveal(m, false);
       addBtn("Next player ›", "primary", nextRound);
@@ -179,9 +198,14 @@
     return { QB: "Quarterback", RB: "Running Back", FB: "Fullback", HB: "Running Back", WR: "Wide Receiver", TE: "Tight End" }[p] || p;
   }
 
-  $("#hint-btn").addEventListener("click", () => {
-    if (S.locked || S.hints >= 2) return;
-    S.hints++;
+  $("#reveal-team").addEventListener("click", () => {
+    if (S.locked || S.teamShown || S.teamLeft <= 0) return;
+    S.teamShown = true; S.teamLeft--;
+    render();
+  });
+  $("#reveal-season").addEventListener("click", () => {
+    if (S.locked || S.seasonShown || S.seasonLeft <= 0) return;
+    S.seasonShown = true; S.seasonLeft--;
     render();
   });
 
