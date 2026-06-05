@@ -45,25 +45,25 @@
   flex: 1;
   width: 100%; max-width: 720px;
   margin: 0 auto;
-  padding: var(--sp-lg) var(--sp-md) calc(var(--sp-lg) + var(--safe-b));
+  padding: var(--sp-md) var(--sp-md) var(--safe-b);
   display: flex; flex-direction: column;
 }
 .gcard {
   background: var(--glass);
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: var(--sp-lg);
+  padding: var(--sp-md);
   box-shadow: var(--elev-2);
 }
 .muted { color: var(--muted); }
 .center { text-align: center; }
 
 /* options (multiple choice) */
-.opt-list { display: grid; gap: var(--sp-sm); margin-top: var(--sp-md); }
+.opt-list { display: grid; gap: var(--sp-sm); margin-top: var(--sp-sm); }
 .opt {
   display: flex; align-items: center; gap: 10px;
-  width: 100%; min-height: 56px;
-  padding: 12px 16px;
+  width: 100%; min-height: 50px;
+  padding: 10px 16px;
   border: 1px solid var(--line); border-radius: 14px;
   background: var(--glass); color: var(--text);
   font-weight: 700; font-size: var(--fs-md);
@@ -92,7 +92,7 @@
 .row-btns { display: flex; gap: var(--sp-sm); justify-content: center; flex-wrap: wrap; margin-top: var(--sp-lg); }
 
 /* stat-line: stat table */
-.statline { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin: var(--sp-md) 0; }
+.statline { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin: var(--sp-sm) 0; }
 .statline .s-k { color: var(--muted); }
 .statline .s-v { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 .season-badge {
@@ -102,10 +102,10 @@
 }
 
 /* clue list (career path) */
-.clues { display: flex; flex-direction: column; gap: var(--sp-sm); margin: var(--sp-md) 0; }
+.clues { display: flex; flex-direction: column; gap: 6px; margin: var(--sp-sm) 0; }
 .clue {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border-radius: 14px;
+  padding: 9px 14px; border-radius: 12px;
   border: 1px solid var(--line); background: var(--glass);
   animation: clueIn var(--dur-slow) var(--ease) both;
 }
@@ -116,14 +116,25 @@
 .clue.locked { opacity: 0.4; font-style: italic; }
 
 /* result banner */
-.banner { text-align: center; font-weight: 800; font-size: var(--fs-lg); margin: var(--sp-md) 0; min-height: 1.4em; }
+.banner { text-align: center; font-weight: 800; font-size: var(--fs-md); margin: var(--sp-sm) 0; min-height: 1.3em; }
 .banner.good { color: var(--higher); }
 .banner.bad { color: var(--lower); }
 
-.player-reveal { text-align: center; margin-top: var(--sp-md); }
-.player-reveal img { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; object-position: top center; border: 2px solid var(--line); background: rgba(0,0,0,0.25); }
-.player-reveal .pr-name { font-weight: 800; font-size: var(--fs-lg); margin-top: 6px; }
+/* compact, horizontal reveal so it doesn't push the buttons off-screen */
+.player-reveal { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: left; margin-top: var(--sp-sm); }
+.player-reveal img { width: 54px; height: 54px; flex: none; border-radius: 50%; object-fit: cover; object-position: top center; border: 2px solid var(--line); background: rgba(0,0,0,0.25); }
+.player-reveal .pr-name { font-weight: 800; font-size: var(--fs-md); }
 .player-reveal .pr-meta { color: var(--muted); font-size: var(--fs-sm); }
+
+/* keep the post-guess action buttons pinned in view (no scrolling to reach them) */
+#next-row:not(:empty) {
+  position: sticky;
+  bottom: 0;
+  z-index: 7;
+  margin-top: var(--sp-sm);
+  padding: var(--sp-sm) 0 calc(var(--sp-sm) + var(--safe-b));
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+}
 
 /* ============================================================
    PLAYER GRID
