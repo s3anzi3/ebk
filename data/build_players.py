@@ -48,20 +48,29 @@ OUT_PATH = os.path.normpath(os.path.join(HERE, "..", "public", "data", "players.
 # Offensive skill positions only.
 SKILL_POS = {"QB", "RB", "FB", "HB", "WR", "TE"}
 
-# Stat categories. Each: (csv_column, label, decimals, icon, opportunity_col, positions)
-#   opportunity_col: a player-season qualifies for this category only if this
-#                    column is > 0 (None => qualifies whenever they played).
-#   positions:       restrict the category to these positions (None => any skill pos).
+# A player-season qualifies for a stat category only if it was active in that
+# stat AREA. Activity = ANY column in the area is non-zero. This is robust to
+# early seasons where a single "opportunity" column is unreliable (e.g. 2003
+# has targets=0 for players who clearly caught passes).
+AREA_COLS = {
+    "pass": ["attempts", "passing_yards", "passing_tds"],
+    "rush": ["carries", "rushing_yards", "rushing_tds"],
+    "recv": ["targets", "receptions", "receiving_yards", "receiving_tds"],
+}
+
+# Stat categories. Each: (csv_column, label, decimals, icon, area, positions)
+#   area:      stat area whose activity gates inclusion (None => any season played).
+#   positions: restrict the category to these positions (None => any skill pos).
 CATEGORIES = [
-    ("passing_yards",      "Passing Yards",        0, "\U0001F3AF", "attempts", {"QB"}),
-    ("passing_tds",        "Passing TDs",          0, "\U0001F680", "attempts", {"QB"}),
-    ("rushing_yards",      "Rushing Yards",        0, "\U0001F3C3", "carries",  None),
-    ("rushing_tds",        "Rushing TDs",          0, "\U0001F4A8", "carries",  None),
-    ("receiving_yards",    "Receiving Yards",      0, "\U0001F64C", "targets",  None),
-    ("receptions",         "Receptions",           0, "\U0001F9E4", "targets",  None),
-    ("receiving_tds",      "Receiving TDs",        0, "\U0001F525", "targets",  None),
-    ("fantasy_points",     "Fantasy Points (Std)", 1, "\U0001F3C8", None,       None),
-    ("fantasy_points_ppr", "Fantasy Points (PPR)", 1, "⭐",     None,       None),
+    ("passing_yards",      "Passing Yards",        0, "\U0001F3AF", "pass", {"QB"}),
+    ("passing_tds",        "Passing TDs",          0, "\U0001F680", "pass", {"QB"}),
+    ("rushing_yards",      "Rushing Yards",        0, "\U0001F3C3", "rush", None),
+    ("rushing_tds",        "Rushing TDs",          0, "\U0001F4A8", "rush", None),
+    ("receiving_yards",    "Receiving Yards",      0, "\U0001F64C", "recv", None),
+    ("receptions",         "Receptions",           0, "\U0001F9E4", "recv", None),
+    ("receiving_tds",      "Receiving TDs",        0, "\U0001F525", "recv", None),
+    ("fantasy_points",     "Fantasy Points (Std)", 1, "\U0001F3C8", None,   None),
+    ("fantasy_points_ppr", "Fantasy Points (PPR)", 1, "⭐",     None,   None),
 ]
 
 # -----------------------------------------------------------------------------
@@ -179,18 +188,24 @@ def build():
 
             games = to_num(row.get("games")) or 0
 
+            # which stat areas was this player-season active in?
+            active = {
+                area: any((to_num(row.get(c)) or 0) != 0 for c in cols)
+                for area, cols in AREA_COLS.items()
+            }
+
             stats = {}
-            for col, _label, decimals, _icon, opp_col, positions in CATEGORIES:
+            for col, _label, decimals, _icon, area, positions in CATEGORIES:
                 if positions and pos not in positions:
                     continue
-                if opp_col is not None:
-                    if (to_num(row.get(opp_col)) or 0) <= 0:
+                if area is not None:
+                    if not active[area]:
                         continue
                 elif games <= 0:          # fantasy categories: must have played
                     continue
                 value = to_num(row.get(col))
-                if value is None:
-                    continue
+                if value is None:         # blank in-area stat -> treat as 0
+                    value = 0.0
                 stats[col] = round_stat(value, decimals)
                 cat_counts[col] += 1
 
