@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "streakskin",
+    "site": "eliteballknowledge",
     "public": "public",
     "ignore": [
       "firebase.json",

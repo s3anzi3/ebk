@@ -3,7 +3,7 @@
 (() => {
   "use strict";
 
-  const BEST_KEY = "streakskin_best";   // localStorage: best streak per category
+  const BEST_KEY = "ebk_best";          // localStorage: best streak per category
   const REVEAL_PAUSE = 1100;            // ms to admire the reveal before advancing
   const $ = (sel, root = document) => root.querySelector(sel);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
