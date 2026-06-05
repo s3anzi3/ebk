@@ -105,11 +105,15 @@
       // two identical passes so the -50% marquee loops seamlessly
       for (var pass = 0; pass < 2; pass++) {
         NFL.franchises.forEach(function (f) {
+          var a = document.createElement("a");
+          a.className = "strip-logo";
+          a.href = "/nfl/team/?t=" + f.key;
+          a.title = f.name;
+          if (pass === 1) a.setAttribute("aria-hidden", "true");
           var img = document.createElement("img");
           img.src = NFL.logo(f.key); img.alt = f.name; img.loading = "lazy";
-          img.className = "strip-logo";
-          if (pass === 1) img.setAttribute("aria-hidden", "true");
-          track.appendChild(img);
+          a.appendChild(img);
+          track.appendChild(a);
         });
       }
       strip.appendChild(track);

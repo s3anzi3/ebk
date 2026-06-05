@@ -78,13 +78,15 @@
   width: max-content;
   animation: marquee 48s linear infinite;
 }
-.logo-strip:hover .logo-track { animation-play-state: paused; }
+/* pause only when hovering an actual logo (not the whole strip) */
+.logo-track:has(.strip-logo:hover) { animation-play-state: paused; }
 /* margin (not flex gap) so translateX(-50%) loops seamlessly */
 .strip-logo {
-  width: 42px; height: 42px; flex: none; object-fit: contain;
+  display: inline-flex; flex: none;
   margin-right: 30px; opacity: 0.85;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
+.strip-logo img { width: 42px; height: 42px; object-fit: contain; display: block; }
 .strip-logo:hover { transform: scale(1.25); opacity: 1; }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 

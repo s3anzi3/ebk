@@ -1,0 +1,59 @@
+/* ============================================================
+   EBK — Team study page (browse / filter / sort player-seasons)
+   ============================================================ */
+
+.team-head {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: var(--sp-md);
+}
+.team-head img { width: 60px; height: 60px; object-fit: contain; flex: none; }
+.team-head h1 { margin: 0; font-size: var(--fs-xl); line-height: 1; }
+.team-head .sub { color: var(--muted); font-size: var(--fs-sm); }
+
+.filters { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-sm); }
+.chip-row2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn {
+  padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--glass); color: var(--muted); cursor: pointer;
+  font-weight: 700; font-size: var(--fs-sm);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.chip-btn:hover { border-color: var(--accent); }
+.chip-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.field { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-sm); }
+.field select, .search {
+  background: var(--glass); border: 1px solid var(--line); color: var(--text);
+  border-radius: 10px; padding: 8px 10px; font-size: var(--fs-sm); font-family: inherit;
+}
+.search { min-width: 160px; }
+.count { color: var(--muted); font-size: var(--fs-xs); margin: 4px 0 var(--sp-sm); }
+
+.table-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line); border-radius: 14px;
+  max-height: 70vh; overflow-y: auto;
+}
+table.tbl { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.tbl thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg-2); color: var(--muted);
+  font-weight: 700; cursor: pointer; user-select: none;
+}
+.tbl thead th:hover { color: var(--text); }
+.tbl th.sort-asc::after { content: " \25B2"; color: var(--accent); }
+.tbl th.sort-desc::after { content: " \25BC"; color: var(--accent); }
+/* sticky player column */
+.tbl th:first-child, .tbl td:first-child {
+  text-align: left; position: sticky; left: 0; z-index: 1;
+  background: var(--bg);
+}
+.tbl thead th:first-child { z-index: 3; background: var(--bg-2); }
+.tbl tbody tr:nth-child(odd) td { background: rgba(255,255,255,0.02); }
+.tbl tbody tr:nth-child(odd) td:first-child { background: #0c1124; }
+.tbl tbody tr:hover td { background: rgba(61,220,151,0.08); }
+.tbl tbody tr:hover td:first-child { background: #10331f; }
+.tbl .pname { font-weight: 700; }
+.tbl .ppos { color: var(--muted); font-size: var(--fs-xs); }
+.empty { text-align: center; color: var(--muted); padding: var(--sp-lg); }
