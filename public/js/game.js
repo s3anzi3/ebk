@@ -3,7 +3,10 @@
 (() => {
   "use strict";
 
-  const BEST_KEY = "ebk_best";          // localStorage: best streak per category
+  const SPORT = document.body.dataset.sport || "nfl";
+  const LEAGUE = window[SPORT.toUpperCase()] || window.NFL; // team logo/name helper
+  const DATA_URL = SPORT === "nfl" ? "/data/players.json" : "/data/" + SPORT + "/players.json";
+  const BEST_KEY = SPORT === "nfl" ? "ebk_best" : "ebk_" + SPORT + "_best";
   const REVEAL_PAUSE = 1100;            // ms to admire the reveal before advancing
   const $ = (sel, root = document) => root.querySelector(sel);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -66,7 +69,7 @@
 
   async function load() {
     try {
-      const res = await fetch("/data/players.json", { cache: "no-cache" });
+      const res = await fetch(DATA_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       state.data = await res.json();
       buildCategoryGrid();
@@ -147,8 +150,8 @@
     panel.classList.remove("result-correct", "result-wrong", "shake");
 
     $(".panel-name", panel).textContent = p.name;
-    const logo = (p.team && window.NFL) ? `<img class="tlogo" src="${NFL.logo(p.team)}" alt="" /> ` : "";
-    $(".panel-meta", panel).innerHTML = `${p.season} · ${logo}${p.team || "—"} · ${p.pos || "—"}`;
+    const logo = (p.team && LEAGUE) ? `<img class="tlogo" src="${LEAGUE.logo(p.team)}" alt="" /> ` : "";
+    $(".panel-meta", panel).innerHTML = `${p.seasonLabel || p.season} · ${logo}${p.team || "—"} · ${p.pos || "—"}`;
 
     const img = $(".panel-photo img", panel);
     const bg = $(".panel-bg", panel);
@@ -264,9 +267,9 @@
     $("#new-best").hidden = !(state.streak > 0 && state.streak === state.best &&
                               state.streak === getBest(cat.key));
     $("#over-detail").innerHTML =
-      `<strong>${c.name}</strong> (${c.season}) had ` +
+      `<strong>${c.name}</strong> (${c.seasonLabel || c.season}) had ` +
       `<strong>${fmt(statValue(c), cat.decimals)}</strong> ${cat.label.toLowerCase()} — ` +
-      `vs <strong>${a.name}</strong> (${a.season}) with ` +
+      `vs <strong>${a.name}</strong> (${a.seasonLabel || a.season}) with ` +
       `<strong>${fmt(statValue(a), cat.decimals)}</strong>.`;
     showScreen("screen-over");
     const anime = A();
