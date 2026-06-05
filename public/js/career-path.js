@@ -1,22 +1,25 @@
-/* EBK · Career Path — trace draft / college / team clues to the player. */
+/* EBK · Career Path — all clues shown as facts; name the player. */
 (() => {
   "use strict";
-  const BEST_KEY = "ebk_careerpath_best";
+  const BEST_KEY = "ebk_careerpath_best_v2"; // v2: facts model, score = correct
+  const POS_REVEALS = 5;                      // "reveal position" lifelines per run
   const $ = (s, r = document) => r.querySelector(s);
   const rand = (a) => a[(Math.random() * a.length) | 0];
   const getBest = () => { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } };
   const setBest = (v) => { try { localStorage.setItem(BEST_KEY, v); } catch {} };
-  const PTS = [100, 70, 45, 25];
 
   const S = {
-    careers: new Map(), posIndex: new Map(), pool: [],
-    mystery: null, clues: [], revealed: 1, options: [], eliminated: new Set(),
+    careers: new Map(), pool: [],
+    mystery: null, options: [], posShown: false, posLeft: POS_REVEALS,
     score: 0, best: 0, locked: false,
   };
 
   function isNotable(s) {
     return (s.fantasy_points_ppr || 0) >= 60 || (s.passing_yards || 0) >= 1200 ||
            (s.rushing_yards || 0) >= 450 || (s.receiving_yards || 0) >= 450;
+  }
+  function posName(p) {
+    return { QB: "Quarterback", RB: "Running Back", FB: "Fullback", HB: "Running Back", WR: "Wide Receiver", TE: "Tight End" }[p] || p;
   }
 
   async function load() {
@@ -49,8 +52,6 @@
         for (const y of yrs) { const k = NFL.keyOf(c.years.get(y)); if (path[path.length - 1] !== k) path.push(k); }
         c.path = path;
         S.pool.push(c);
-        if (!S.posIndex.has(c.pos)) S.posIndex.set(c.pos, []);
-        S.posIndex.get(c.pos).push(c);
       }
 
       S.best = getBest();
@@ -63,11 +64,12 @@
     }
   }
 
-  function buildClues(c) {
+  function facts(c, posShown) {
     const draft = c.dy
       ? `${c.dy} · Round ${c.dr || "?"} · Pick ${c.dp || "?"}${c.dt ? " (" + NFL.name(c.dt) + ")" : ""}`
       : "Undrafted";
     return [
+      { icon: "🏈", k: "Position", v: posShown ? posName(c.pos) : "hidden — use a reveal", locked: !posShown },
       { icon: "🎟️", k: "Draft", v: draft },
       { icon: "🎓", k: "College", v: c.college || "Unknown" },
       { icon: "📅", k: "Career", v: `${c.min}–${c.max} · ${c.count} season${c.count > 1 ? "s" : ""}` },
@@ -75,10 +77,10 @@
     ];
   }
 
+  // 4 mixed-position options, era-overlapping, including the answer.
   function pickOptions(c) {
-    const same = (S.posIndex.get(c.pos) || []).filter((o) =>
-      o.id !== c.id && o.max >= c.min - 8 && o.min <= c.max + 8);
-    const pool = (same.length >= 3 ? same : (S.posIndex.get(c.pos) || []).filter((o) => o.id !== c.id)).slice();
+    const era = S.pool.filter((o) => o.id !== c.id && o.max >= c.min - 8 && o.min <= c.max + 8);
+    const pool = (era.length >= 3 ? era : S.pool.filter((o) => o.id !== c.id)).slice();
     const picks = [];
     while (picks.length < 3 && pool.length) picks.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);
     const opts = picks.map((o) => ({ id: o.id, name: o.name }));
@@ -87,15 +89,17 @@
     return opts;
   }
 
-  function newRun() { S.score = 0; $("#score").textContent = "0"; nextRound(); }
+  function newRun() {
+    S.score = 0; S.posLeft = POS_REVEALS;
+    $("#score").textContent = "0";
+    nextRound();
+  }
 
   function nextRound() {
     S.mystery = rand(S.pool);
-    S.clues = buildClues(S.mystery);
-    S.revealed = 1;
-    S.eliminated = new Set();
+    S.posShown = false;
     S.options = pickOptions(S.mystery);
-    S.solved = false;
+    S.locked = false;
     $("#banner").textContent = ""; $("#banner").className = "banner";
     $("#reveal").hidden = true;
     $("#next-row").hidden = true; $("#next-row").innerHTML = "";
@@ -103,19 +107,21 @@
   }
 
   function render() {
-    $("#pos-line").textContent = posName(S.mystery.pos);
-    const cl = $("#clues");
+    const cl = $("#facts");
     cl.innerHTML = "";
-    S.clues.forEach((c, i) => {
-      const shown = i < S.revealed;
+    for (const f of facts(S.mystery, S.posShown)) {
       const div = document.createElement("div");
-      div.className = "clue" + (shown ? "" : " locked");
-      div.innerHTML = shown
-        ? `<span class="c-icon">${c.icon}</span><div><div class="c-k">${c.k}</div><div class="c-v">${c.v}</div></div>`
-        : `<span class="c-icon">🔒</span><div><div class="c-k">${c.k}</div><div class="c-v">hidden</div></div>`;
+      div.className = "clue" + (f.locked ? " locked" : "");
+      div.innerHTML = `<span class="c-icon">${f.locked ? "🔒" : f.icon}</span>` +
+        `<div><div class="c-k">${f.k}</div><div class="c-v">${f.v}</div></div>`;
       cl.appendChild(div);
-    });
-    $("#clue-btn").hidden = S.solved || S.revealed >= S.clues.length;
+    }
+
+    $("#lifelines").hidden = S.locked;
+    const pb = $("#reveal-pos");
+    if (S.posShown) { pb.disabled = true; pb.textContent = "🏈 position shown"; }
+    else if (S.posLeft <= 0) { pb.disabled = true; pb.textContent = "🏈 no position reveals left"; }
+    else { pb.disabled = false; pb.textContent = `🏈 Reveal position (${S.posLeft})`; }
 
     const ol = $("#options");
     ol.innerHTML = "";
@@ -123,43 +129,44 @@
       const b = document.createElement("button");
       b.className = "opt";
       b.textContent = o.name;
-      if (S.solved) {
+      if (S.locked) {
         b.disabled = true;
         if (o.id === S.mystery.id) b.classList.add("correct");
-        else if (S.eliminated.has(o.id)) b.classList.add("wrong");
-      } else if (S.eliminated.has(o.id)) {
-        b.disabled = true; b.classList.add("wrong");
       } else {
-        b.addEventListener("click", () => guess(o.id));
+        b.addEventListener("click", () => guess(o.id, b));
       }
       ol.appendChild(b);
     });
   }
 
-  function revealNext() { if (!S.solved && S.revealed < S.clues.length) { S.revealed++; render(); } }
-
-  function guess(id) {
-    if (S.solved) return;
+  function guess(id, btn) {
+    if (S.locked) return;
+    S.locked = true;
     const c = S.mystery;
-    if (id === c.id) {
-      S.solved = true;
-      const pts = PTS[Math.min(S.revealed - 1, PTS.length - 1)];
-      S.score += pts;
+    const correct = id === c.id;
+
+    [...$("#options").children].forEach((b, i) => {
+      b.disabled = true;
+      if (S.options[i].id === c.id) b.classList.add("correct");
+      else if (b === btn) b.classList.add("wrong");
+    });
+    $("#lifelines").hidden = true;
+
+    const banner = $("#banner");
+    if (correct) {
+      S.score += 1;
       const sc = $("#score"); sc.textContent = S.score;
       sc.classList.remove("pop"); void sc.offsetWidth; sc.classList.add("pop");
       if (S.score > S.best) { S.best = S.score; setBest(S.best); $("#best").textContent = S.best; }
-      S.revealed = S.clues.length;
-      render();
-      const banner = $("#banner"); banner.textContent = `Correct! +${pts}`; banner.className = "banner good";
+      banner.textContent = "Correct!"; banner.className = "banner good";
       showReveal(c);
       addBtn("Next player ›", "primary", nextRound);
-      addBtn("Back to EBK", "ghost", () => (location.href = "/"));
     } else {
-      S.eliminated.add(id);
-      if (S.revealed < S.clues.length) S.revealed++;
-      render();
-      const banner = $("#banner"); banner.textContent = "Not that one — here's another clue."; banner.className = "banner bad";
+      banner.textContent = "Wrong!"; banner.className = "banner bad";
+      showReveal(c);
+      addBtn("New run", "primary", newRun);
     }
+    addBtn("Back to EBK", "ghost", () => (location.href = "/"));
   }
 
   function showReveal(c) {
@@ -177,11 +184,11 @@
     b.addEventListener("click", fn); row.appendChild(b);
   }
 
-  function posName(p) {
-    return { QB: "Quarterback", RB: "Running Back", FB: "Fullback", HB: "Running Back", WR: "Wide Receiver", TE: "Tight End" }[p] || p;
-  }
-
-  $("#clue-btn").addEventListener("click", () => { if (!S.locked) revealNext(); });
+  $("#reveal-pos").addEventListener("click", () => {
+    if (S.locked || S.posShown || S.posLeft <= 0) return;
+    S.posShown = true; S.posLeft--;
+    render();
+  });
 
   load();
 })();
