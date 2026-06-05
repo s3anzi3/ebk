@@ -24,7 +24,9 @@ import csv
 import io
 import json
 import os
+import re
 import sys
+import unicodedata
 import urllib.request
 from datetime import date
 
@@ -44,6 +46,17 @@ PLAYERS_URL = (
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW_DIR = os.path.join(HERE, "raw")
 OUT_PATH = os.path.normpath(os.path.join(HERE, "..", "public", "data", "players.json"))
+COLLEGES_OUT = os.path.normpath(os.path.join(HERE, "..", "public", "data", "colleges.json"))
+CFB_URL = ("https://site.api.espn.com/apis/site/v2/sports/football/"
+           "college-football/teams?limit=1000")
+# college-name aliases (our name -> ESPN's normalized name)
+COLLEGE_ALIASES = {
+    "mississippi": "ole miss", "southern mississippi": "southern miss",
+    "connecticut": "uconn", "louisiana lafayette": "louisiana",
+    "louisiana monroe": "ul monroe", "texas el paso": "utep",
+    "texas san antonio": "utsa", "tennessee chattanooga": "chattanooga",
+    "massachusetts": "umass", "umass amherst": "umass",
+}
 
 # Position groups we keep: offensive skill + defense (no OL / special teams).
 OFF_GROUPS = {"QB", "RB", "WR", "TE"}
@@ -167,6 +180,67 @@ def build_people(used_ids):
     return people
 
 
+def cnorm(s):
+    """Normalize a college name for fuzzy matching (accents, suffixes, state)."""
+    s = s.split(";")[0].strip()
+    s = "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+    s = s.lower().replace("&", "and").replace(".", "").replace("-", " ").replace("'", "")
+    s = re.sub(r"\([^)]*\)", "", s)
+    s = re.sub(r"\buniversity of\b", "", s)
+    s = re.sub(r"\b(university|college|the)\b", "", s)
+    s = re.sub(r"^\s*of\b", "", s)
+    s = re.sub(r"\bstate\b", "st", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def fetch_cfb():
+    """ESPN college-football teams (public, no key); cached under raw/."""
+    cache = os.path.join(RAW_DIR, "cfb_teams.json")
+    if os.path.exists(cache) and os.path.getsize(cache) > 0:
+        with open(cache, encoding="utf-8") as f:
+            return json.load(f)
+    os.makedirs(RAW_DIR, exist_ok=True)
+    req = urllib.request.Request(CFB_URL, headers={"User-Agent": "ebk/1.0"})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    with open(cache, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+    return data
+
+
+def build_colleges(people):
+    """Map exact college name -> logo URL for the colleges we use."""
+    try:
+        teams = fetch_cfb()["sports"][0]["leagues"][0]["teams"]
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ! college logos skipped ({exc})")
+        return {}
+    espn = {}
+    for t in teams:
+        tt = t.get("team", {})
+        href = (tt.get("logos") or [{}])[0].get("href")
+        if not href:
+            continue
+        for key in (tt.get("location"), tt.get("shortDisplayName"),
+                    tt.get("displayName"), tt.get("name"), tt.get("abbreviation")):
+            if key:
+                espn.setdefault(cnorm(key), href)
+    out, distinct = {}, set()
+    for b in people.values():
+        c = (b.get("college") or "").strip()
+        if not c:
+            continue
+        distinct.add(c)
+        if c in out:
+            continue
+        n = cnorm(c)
+        href = espn.get(COLLEGE_ALIASES.get(n, n)) or espn.get(n)
+        if href:
+            out[c] = href
+    print(f"  college logos matched: {len(out):,}/{len(distinct):,}")
+    return out
+
+
 def to_num(raw):
     """Parse a CSV cell into a float, or None if blank/non-numeric."""
     if raw is None:
@@ -270,6 +344,10 @@ def build():
     used_ids = {r["id"] for r in players if r["id"]}
     people = build_people(used_ids)
     print(f"  people (bio: college/draft) matched: {len(people):,}/{len(used_ids):,}")
+
+    colleges = build_colleges(people)
+    with open(COLLEGES_OUT, "w", encoding="utf-8") as f:
+        json.dump(colleges, f, ensure_ascii=False, separators=(",", ":"))
 
     out = {
         "generated": date.today().isoformat(),

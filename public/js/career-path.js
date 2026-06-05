@@ -9,7 +9,7 @@
   const setBest = (v) => { try { localStorage.setItem(BEST_KEY, v); } catch {} };
 
   const S = {
-    careers: new Map(), pool: [],
+    careers: new Map(), pool: [], colleges: {},
     mystery: null, options: [], hiddenIdx: 0, revealed: false, revealsLeft: REVEALS,
     score: 0, best: 0, locked: false,
   };
@@ -36,6 +36,10 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       const people = data.people || {};
+      try {
+        const cr = await fetch("/data/colleges.json", { cache: "no-cache" });
+        if (cr.ok) S.colleges = await cr.json();
+      } catch { /* college logos optional */ }
 
       for (const p of data.players) {
         if (!p.id) continue;
@@ -73,6 +77,11 @@
   }
 
   const teamTag = (k) => `<img class="tlogo" src="${NFL.logo(k)}" alt="" /> ${NFL.name(k)}`;
+  const collegeTag = (name) => {
+    if (!name) return "Unknown";
+    const url = S.colleges[name];
+    return url ? `<img class="tlogo" src="${url}" alt="" /> ${name}` : name;
+  };
 
   function facts(c) {
     const draft = c.dy
@@ -81,7 +90,7 @@
     return [
       { icon: "🏈", k: "Position", v: posName(c.pos) },
       { icon: "🎟️", k: "Draft", v: draft },
-      { icon: "🎓", k: "College", v: c.college || "Unknown" },
+      { icon: "🎓", k: "College", v: collegeTag(c.college) },
       { icon: "📅", k: "Career", v: `${c.min}–${c.max} · ${c.count} season${c.count > 1 ? "s" : ""}` },
       { icon: "🧭", k: "Team path", v: c.path.map(teamTag).join("  →  ") },
     ];
