@@ -155,13 +155,10 @@
 
     const img = $(".panel-photo img", panel);
     const bg = $(".panel-bg", panel);
-    if (p.headshot) {
-      img.src = p.headshot; img.style.display = "";
-      bg.style.backgroundImage = `url("${p.headshot}")`;
-    } else {
-      img.removeAttribute("src"); img.style.display = "none";
-      bg.style.backgroundImage = "";
-    }
+    img.style.display = "";
+    img.onerror = () => { img.onerror = null; img.src = "/img/avatar.svg"; };
+    img.src = p.headshot || "/img/avatar.svg";
+    bg.style.backgroundImage = p.headshot ? `url("${p.headshot}")` : "";
 
     if (revealed) {
       $(".stat-value", panel).textContent = fmt(statValue(p), dec);

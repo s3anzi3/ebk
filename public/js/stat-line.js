@@ -195,7 +195,7 @@
 
   function showReveal(m) {
     const r = $("#reveal");
-    const img = m.headshot ? `<img alt="" src="${m.headshot}" />` : "";
+    const img = `<img alt="" src="${m.headshot || "/img/avatar.svg"}" onerror="this.onerror=null;this.src='/img/avatar.svg'" />`;
     r.innerHTML = `${img}<div class="pr-name">${m.name}</div>` +
       `<div class="pr-meta">${CFG.seasonFmt(m.season)} · ${LEAGUE.name(m.team)} · ${posName(m.pos)}</div>`;
     r.hidden = false;
