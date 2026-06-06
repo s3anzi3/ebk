@@ -21,7 +21,7 @@
         ["def_sacks", "Sacks"], ["tackles", "Tackles"], ["def_interceptions", "Interceptions"],
         ["def_pass_defended", "Passes Def"], ["def_fumbles_forced", "Forced Fum"],
       ],
-      dec1: new Set(["def_sacks", "fantasy_points", "fantasy_points_ppr"]),
+      dec: { def_sacks: 1, fantasy_points: 1, fantasy_points_ppr: 1 },
       posNames: {
         QB: "Quarterback", RB: "Running Back", FB: "Fullback", HB: "Running Back",
         WR: "Wide Receiver", TE: "Tight End",
@@ -41,11 +41,25 @@
         ["pts", "Points"], ["ppg", "PPG"], ["reb", "Rebounds"], ["rpg", "RPG"],
         ["ast", "Assists"], ["apg", "APG"], ["stl", "Steals"], ["blk", "Blocks"], ["tpm", "3-Pointers"],
       ],
-      dec1: new Set(["ppg", "rpg", "apg"]),
+      dec: { ppg: 1, rpg: 1, apg: 1 },
       posNames: { PG: "Point Guard", SG: "Shooting Guard", SF: "Small Forward",
                   PF: "Power Forward", C: "Center", G: "Guard", F: "Forward" },
       sides: {},                              // one side: wildcard drawn from all
       notable: [["ppg", 10], ["pts", 500], ["rpg", 6], ["apg", 4]],
+    },
+    mlb: {
+      yMin: 2000, yMax: 2021, seasonFmt: (y) => String(y),
+      display: [
+        ["hr", "Home Runs"], ["rbi", "RBI"], ["hits", "Hits"], ["runs", "Runs"],
+        ["sb", "Stolen Bases"], ["avg", "Batting Avg"],
+        ["w", "Wins"], ["k", "Strikeouts"], ["sv", "Saves"], ["era", "ERA"],
+      ],
+      dec: { avg: 3, era: 2 },
+      posNames: { P: "Pitcher", C: "Catcher", "1B": "First Base", "2B": "Second Base",
+                  "3B": "Third Base", SS: "Shortstop", OF: "Outfield", DH: "Designated Hitter" },
+      sides: { H: "bat", P: "pitch" },
+      notable: [["hr", 12], ["hits", 120], ["rbi", 60], ["runs", 60], ["sb", 20],
+                ["w", 8], ["k", 100], ["sv", 10]],
     },
   }[SPORT];
 
@@ -54,7 +68,7 @@
   const take = (a) => a.splice((Math.random() * a.length) | 0, 1)[0];
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const sideOf = (g) => CFG.sides[g] || "all";
-  const dec1 = (k) => CFG.dec1.has(k);
+  const decOf = (k) => CFG.dec[k] || 0;
   const posName = (p) => CFG.posNames[p] || p;
 
   const EXACT_REVEALS = 5;
@@ -143,7 +157,7 @@
     const rows = [`<div class="s-k">Games</div><div class="s-v">${m.games || "—"}</div>`];
     for (const [k, label] of CFG.display) {
       if (m.stats[k] == null) continue;
-      rows.push(`<div class="s-k">${label}</div><div class="s-v">${fmt(m.stats[k], dec1(k) ? 1 : 0)}</div>`);
+      rows.push(`<div class="s-k">${label}</div><div class="s-v">${fmt(m.stats[k], decOf(k))}</div>`);
     }
     $("#statline").innerHTML = rows.join("");
 

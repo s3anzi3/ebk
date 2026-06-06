@@ -21,7 +21,7 @@
         def_sacks: "Sacks", tackles: "Tack", def_interceptions: "INT",
         def_pass_defended: "PD", def_fumbles_forced: "FF",
       },
-      dec1: new Set(["def_sacks", "fantasy_points", "fantasy_points_ppr"]),
+      dec: { def_sacks: 1, fantasy_points: 1, fantasy_points_ppr: 1 },
       colsets: {
         all: ["games", "fantasy_points_ppr"],
         QB: ["games", "passing_yards", "passing_tds", "rushing_yards", "rushing_tds", "fantasy_points_ppr"],
@@ -40,12 +40,24 @@
         games: "G", pts: "PTS", ppg: "PPG", reb: "REB", rpg: "RPG",
         ast: "AST", apg: "APG", stl: "STL", blk: "BLK", tpm: "3PM",
       },
-      dec1: new Set(["ppg", "rpg", "apg"]),
+      dec: { ppg: 1, rpg: 1, apg: 1 },
       colsets: {
         all: ["games", "pts", "ppg", "reb", "ast"],
         G: ["games", "pts", "ppg", "ast", "apg", "stl", "tpm"],
         F: ["games", "pts", "ppg", "reb", "rpg", "ast", "tpm"],
         C: ["games", "pts", "ppg", "reb", "rpg", "blk", "stl"],
+      },
+    },
+    mlb: {
+      seasons: "2000–2021",
+      groups: ["all", "H", "P"],
+      labels: { games: "G", hr: "HR", rbi: "RBI", hits: "H", runs: "R", sb: "SB", avg: "AVG",
+                w: "W", k: "K", sv: "SV", era: "ERA" },
+      dec: { avg: 3, era: 2 },
+      colsets: {
+        all: ["games", "hr", "rbi", "avg"],
+        H: ["games", "hr", "rbi", "hits", "runs", "sb", "avg"],
+        P: ["games", "w", "k", "sv", "era"],
       },
     },
   }[SPORT];
@@ -117,7 +129,7 @@
     const cols = [{ key: "name", label: "Player", type: "text" }];
     if (S.group === "all") cols.push({ key: "pos", label: "Pos", type: "text" });
     cols.push({ key: "season", label: "Season", type: "num" });
-    for (const k of CFG.colsets[S.group]) cols.push({ key: k, label: CFG.labels[k], type: "num", dec: CFG.dec1.has(k) ? 1 : 0 });
+    for (const k of CFG.colsets[S.group]) cols.push({ key: k, label: CFG.labels[k], type: "num", dec: CFG.dec[k] || 0 });
     return cols;
   }
 

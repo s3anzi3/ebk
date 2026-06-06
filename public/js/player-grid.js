@@ -27,6 +27,7 @@
       positions: [["QB", "QB"], ["RB", "RB"], ["WR", "WR"], ["TE", "TE"],
                   ["DL", "D-Line"], ["LB", "Linebacker"], ["DB", "Def. Back"]],
       flags: [["r1", "1st-Rd Pick"], ["undrafted", "Undrafted"]],
+      posKey: "grp",
     },
     nba: {
       ach: [
@@ -40,6 +41,24 @@
       ],
       positions: [["G", "Guard"], ["F", "Forward"], ["C", "Center"]],
       flags: [],
+      posKey: "grp",
+    },
+    mlb: {
+      ach: [
+        ["hr30",  "30+ HR",        "hr",  30],
+        ["hr40",  "40+ HR",        "hr",  40],
+        ["rbi100","100+ RBI",      "rbi", 100],
+        ["h200",  "200+ Hits",     "hits", 200],
+        ["sb30",  "30+ Steals",    "sb",  30],
+        ["avg300",".300+ Average", "avg", 0.300],
+        ["w18",   "18+ Wins",      "w",   18],
+        ["k200",  "200+ K",        "k",   200],
+        ["sv30",  "30+ Saves",     "sv",  30],
+      ],
+      positions: [["P", "Pitcher"], ["C", "Catcher"], ["1B", "1B"], ["2B", "2B"],
+                  ["3B", "3B"], ["SS", "SS"], ["OF", "Outfield"]],
+      flags: [],
+      posKey: "pos",
     },
   }[SPORT];
   const ACH = CFG.ach;
@@ -84,7 +103,7 @@
       let a = byId.get(p.id);
       if (!a) {
         const bio = people[p.id] || {};
-        a = { id: p.id, name: p.name, pos: p.grp || normPos(p.pos), headshot: p.headshot,
+        a = { id: p.id, name: p.name, pos: p[CFG.posKey] || p.grp || normPos(p.pos), headshot: p.headshot,
               teams: new Set(), ach: new Set(),
               r1: bio.draftRound === 1, undrafted: bio.draftYear == null,
               min: p.season, max: p.season };

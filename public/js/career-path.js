@@ -35,6 +35,14 @@
                   PF: "Power Forward", C: "Center", G: "Guard", F: "Forward" },
       notable: [["ppg", 10], ["pts", 500], ["rpg", 6], ["apg", 4]],
     },
+    mlb: {
+      icon: "⚾", seasonFmt: (y) => String(y),
+      facts: ["position", "career", "teampath"],
+      posNames: { P: "Pitcher", C: "Catcher", "1B": "First Base", "2B": "Second Base",
+                  "3B": "Third Base", SS: "Shortstop", OF: "Outfield", DH: "Designated Hitter" },
+      notable: [["hr", 12], ["hits", 120], ["rbi", 60], ["runs", 60], ["sb", 20],
+                ["w", 8], ["k", 100], ["sv", 10]],
+    },
   }[SPORT];
 
   const getBest = () => { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } };
