@@ -1,33 +1,56 @@
-/* EBK · Team Study — browse / filter / sort every player-season for a team. */
+/* EBK · Team Study — browse / filter / sort every player-season for a team.
+   Sport-aware via <body data-sport>. */
 (() => {
   "use strict";
   const $ = (s, r = document) => r.querySelector(s);
   const fmt = (v, d = 0) => (v == null ? "—" : Number(v).toLocaleString("en-US", { maximumFractionDigits: d }));
 
-  const LABELS = {
-    games: "G", passing_yards: "Pass Yds", passing_tds: "Pass TD",
-    rushing_yards: "Rush Yds", rushing_tds: "Rush TD", receptions: "Rec",
-    receiving_yards: "Rec Yds", receiving_tds: "Rec TD",
-    fantasy_points: "Std", fantasy_points_ppr: "PPR",
-    def_sacks: "Sacks", tackles: "Tack", def_interceptions: "INT",
-    def_pass_defended: "PD", def_fumbles_forced: "FF",
-  };
-  const DEC1 = new Set(["def_sacks", "fantasy_points", "fantasy_points_ppr"]);
+  const SPORT = document.body.dataset.sport || "nfl";
+  const LEAGUE = window[SPORT.toUpperCase()] || window.NFL;
+  const DATA_URL = SPORT === "nfl" ? "/data/players.json" : "/data/" + SPORT + "/players.json";
 
-  // stat columns shown per position-group filter
-  const COLSETS = {
-    all: ["games", "fantasy_points_ppr"],
-    QB: ["games", "passing_yards", "passing_tds", "rushing_yards", "rushing_tds", "fantasy_points_ppr"],
-    RB: ["games", "rushing_yards", "rushing_tds", "receptions", "receiving_yards", "receiving_tds", "fantasy_points_ppr"],
-    WR: ["games", "receptions", "receiving_yards", "receiving_tds", "rushing_yards", "fantasy_points_ppr"],
-    TE: ["games", "receptions", "receiving_yards", "receiving_tds", "fantasy_points_ppr"],
-    DL: ["games", "def_sacks", "tackles", "def_interceptions", "def_pass_defended", "def_fumbles_forced"],
-    LB: ["games", "tackles", "def_sacks", "def_interceptions", "def_pass_defended", "def_fumbles_forced"],
-    DB: ["games", "def_interceptions", "def_pass_defended", "tackles", "def_sacks", "def_fumbles_forced"],
-  };
-  const GROUPS = ["all", "QB", "RB", "WR", "TE", "DL", "LB", "DB"];
+  const CFG = {
+    nfl: {
+      seasons: "1999–2025",
+      groups: ["all", "QB", "RB", "WR", "TE", "DL", "LB", "DB"],
+      labels: {
+        games: "G", passing_yards: "Pass Yds", passing_tds: "Pass TD",
+        rushing_yards: "Rush Yds", rushing_tds: "Rush TD", receptions: "Rec",
+        receiving_yards: "Rec Yds", receiving_tds: "Rec TD",
+        fantasy_points: "Std", fantasy_points_ppr: "PPR",
+        def_sacks: "Sacks", tackles: "Tack", def_interceptions: "INT",
+        def_pass_defended: "PD", def_fumbles_forced: "FF",
+      },
+      dec1: new Set(["def_sacks", "fantasy_points", "fantasy_points_ppr"]),
+      colsets: {
+        all: ["games", "fantasy_points_ppr"],
+        QB: ["games", "passing_yards", "passing_tds", "rushing_yards", "rushing_tds", "fantasy_points_ppr"],
+        RB: ["games", "rushing_yards", "rushing_tds", "receptions", "receiving_yards", "receiving_tds", "fantasy_points_ppr"],
+        WR: ["games", "receptions", "receiving_yards", "receiving_tds", "rushing_yards", "fantasy_points_ppr"],
+        TE: ["games", "receptions", "receiving_yards", "receiving_tds", "fantasy_points_ppr"],
+        DL: ["games", "def_sacks", "tackles", "def_interceptions", "def_pass_defended", "def_fumbles_forced"],
+        LB: ["games", "tackles", "def_sacks", "def_interceptions", "def_pass_defended", "def_fumbles_forced"],
+        DB: ["games", "def_interceptions", "def_pass_defended", "tackles", "def_sacks", "def_fumbles_forced"],
+      },
+    },
+    nba: {
+      seasons: "2002–2023",
+      groups: ["all", "G", "F", "C"],
+      labels: {
+        games: "G", pts: "PTS", ppg: "PPG", reb: "REB", rpg: "RPG",
+        ast: "AST", apg: "APG", stl: "STL", blk: "BLK", tpm: "3PM",
+      },
+      dec1: new Set(["ppg", "rpg", "apg"]),
+      colsets: {
+        all: ["games", "pts", "ppg", "reb", "ast"],
+        G: ["games", "pts", "ppg", "ast", "apg", "stl", "tpm"],
+        F: ["games", "pts", "ppg", "reb", "rpg", "ast", "tpm"],
+        C: ["games", "pts", "ppg", "reb", "rpg", "blk", "stl"],
+      },
+    },
+  }[SPORT];
 
-  const S = { rows: [], teamKey: "", group: "all", from: 1999, to: 2025, q: "",
+  const S = { rows: [], teamKey: "", group: "all", from: 0, to: 9999, q: "",
               sortKey: "season", sortDir: -1 };
 
   function val(r, key) {
@@ -41,10 +64,10 @@
   async function load() {
     S.teamKey = new URLSearchParams(location.search).get("t") || "";
     try {
-      const res = await fetch("/data/players.json", { cache: "no-cache" });
+      const res = await fetch(DATA_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
-      S.rows = data.players.filter((p) => NFL.keyOf(p.team) === S.teamKey);
+      S.rows = data.players.filter((p) => LEAGUE.keyOf(p.team) === S.teamKey);
       if (!S.rows.length) { $("#loading").textContent = "Unknown team."; return; }
       const seasons = S.rows.map((r) => r.season);
       S.from = Math.min(...seasons); S.to = Math.max(...seasons);
@@ -60,16 +83,16 @@
 
   function buildHead() {
     $("#team-head").innerHTML =
-      `<img src="${NFL.logo(S.teamKey)}" alt="" />` +
-      `<div><h1>${NFL.name(S.teamKey)}</h1>` +
-      `<div class="sub">Every player-season in the EBK pool · 1999–2025</div></div>`;
-    document.title = NFL.name(S.teamKey) + " · Team Study · EBK";
+      `<img src="${LEAGUE.logo(S.teamKey)}" alt="" />` +
+      `<div><h1>${LEAGUE.name(S.teamKey)}</h1>` +
+      `<div class="sub">Every player-season in the EBK pool · ${CFG.seasons}</div></div>`;
+    document.title = LEAGUE.name(S.teamKey) + " · Team Study · EBK";
   }
 
   function buildControls(minY, maxY) {
     const chips = $("#pos-chips");
     chips.innerHTML = "";
-    GROUPS.forEach((g) => {
+    CFG.groups.forEach((g) => {
       const b = document.createElement("button");
       b.className = "chip-btn" + (g === S.group ? " active" : "");
       b.textContent = g === "all" ? "All" : g;
@@ -83,10 +106,7 @@
     });
 
     const from = $("#from"), to = $("#to");
-    for (let y = maxY; y >= minY; y--) {
-      from.add(new Option(y, y));
-      to.add(new Option(y, y));
-    }
+    for (let y = maxY; y >= minY; y--) { from.add(new Option(y, y)); to.add(new Option(y, y)); }
     from.value = minY; to.value = maxY;
     from.addEventListener("change", () => { S.from = +from.value; if (S.from > S.to) { to.value = from.value; S.to = S.from; } render(); });
     to.addEventListener("change", () => { S.to = +to.value; if (S.to < S.from) { from.value = to.value; S.from = S.to; } render(); });
@@ -97,7 +117,7 @@
     const cols = [{ key: "name", label: "Player", type: "text" }];
     if (S.group === "all") cols.push({ key: "pos", label: "Pos", type: "text" });
     cols.push({ key: "season", label: "Season", type: "num" });
-    for (const k of COLSETS[S.group]) cols.push({ key: k, label: LABELS[k], type: "num", dec: DEC1.has(k) ? 1 : 0 });
+    for (const k of CFG.colsets[S.group]) cols.push({ key: k, label: CFG.labels[k], type: "num", dec: CFG.dec1.has(k) ? 1 : 0 });
     return cols;
   }
 
@@ -116,7 +136,7 @@
         return dir * String(va ?? "").localeCompare(String(vb ?? ""));
       }
       va = va == null ? -Infinity : va; vb = vb == null ? -Infinity : vb;
-      if (va === vb) return a.season - b.season; // stable-ish tiebreak
+      if (va === vb) return a.season - b.season;
       return dir * (va - vb);
     });
   }
@@ -145,7 +165,7 @@
       "<tr>" + cols.map((c) => {
         if (c.key === "name") return `<td><span class="pname">${r.name}</span></td>`;
         if (c.key === "pos") return `<td class="ppos">${r.pos}</td>`;
-        if (c.key === "season") return `<td>${r.season}</td>`;
+        if (c.key === "season") return `<td>${r.seasonLabel || r.season}</td>`;
         return `<td>${fmt(val(r, c.key), c.dec)}</td>`;
       }).join("") + "</tr>"
     ).join("");
