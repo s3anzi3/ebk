@@ -1,0 +1,14 @@
+/* EBK · dashboard */
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-sm); margin-bottom: var(--sp-lg); }
+.stat-card {
+  background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
+  padding: var(--sp-md); text-align: center;
+}
+.stat-card .v { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem); font-weight: 900; line-height: 1; color: var(--accent); }
+.stat-card .k { color: var(--muted); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+.stat-card .sub { color: var(--muted); font-size: var(--fs-xs); margin-top: 2px; }
+.dash-h { font-size: var(--fs-lg); margin: var(--sp-lg) 0 var(--sp-sm); }
+.sportcard { display: flex; align-items: center; gap: 10px; justify-content: flex-start; text-align: left; }
+.sportcard .em { font-size: 1.6rem; }
+.sportcard .nm { font-weight: 800; }
+.sportcard .mt { color: var(--muted); font-size: var(--fs-xs); }

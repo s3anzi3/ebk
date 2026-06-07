@@ -1,0 +1,14 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sport", "order": "ASCENDING" },
+        { "fieldPath": "game", "order": "ASCENDING" },
+        { "fieldPath": "best", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

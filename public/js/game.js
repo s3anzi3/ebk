@@ -7,6 +7,8 @@
   const LEAGUE = window[SPORT.toUpperCase()] || window.NFL; // team logo/name helper
   const DATA_URL = SPORT === "nfl" ? "/data/players.json" : "/data/" + SPORT + "/players.json";
   const BEST_KEY = SPORT === "nfl" ? "ebk_best" : "ebk_" + SPORT + "_best";
+  (function () { if (!window.EBKF) { var s = document.createElement("script"); s.src = "/js/ebk-firebase.js"; document.head.appendChild(s); } })();
+  const ebkRecord = (score) => { try { window.EBKF && EBKF.recordScore(SPORT, "higher-lower", score); } catch (e) {} };
   const REVEAL_PAUSE = 1100;            // ms to admire the reveal before advancing
   const $ = (sel, root = document) => root.querySelector(sel);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -258,6 +260,7 @@
   }
 
   function gameOver() {
+    ebkRecord(state.streak);
     const cat = state.category;
     const a = state.anchor, c = state.challenger;
     $("#final-streak").textContent = state.streak;
