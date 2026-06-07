@@ -100,6 +100,7 @@
     return c.user;
   };
   EBKF.signOut = async function () { await EBKF.ready; return EBKF.auth.signOut(); };
+  EBKF.resetPassword = async function (email) { await EBKF.ready; return EBKF.auth.sendPasswordResetEmail(email); };
 
   // record a finished run: keep best + running totals per (sport, game)
   EBKF.recordScore = async function (sport, game, score) {

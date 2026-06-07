@@ -28,20 +28,24 @@
     '<input class="ebk-field" id="ebk-pw" type="password" placeholder="Password" autocomplete="current-password" />' +
     '<div class="ebk-err" id="ebk-err"></div>' +
     '<button class="ebk-btn" data-act="submit">Sign in</button>' +
+    '<button class="ebk-forgot" data-act="forgot">Forgot password?</button>' +
     '</div>';
   document.body.appendChild(modal);
 
   var mode = "in";
   var nameF = modal.querySelector("#ebk-name"), emailF = modal.querySelector("#ebk-email"),
       pwF = modal.querySelector("#ebk-pw"), errEl = modal.querySelector("#ebk-err"),
-      submitBtn = modal.querySelector('[data-act="submit"]');
+      submitBtn = modal.querySelector('[data-act="submit"]'),
+      forgotBtn = modal.querySelector(".ebk-forgot");
 
-  function openModal() { modal.hidden = false; errEl.textContent = ""; emailF.focus(); }
+  function clearMsg() { errEl.textContent = ""; errEl.classList.remove("ok"); }
+  function openModal() { modal.hidden = false; clearMsg(); emailF.focus(); }
   function closeModal() { modal.hidden = true; }
   function setMode(m) {
-    mode = m; errEl.textContent = "";
+    mode = m; clearMsg();
     modal.querySelectorAll(".ebk-tab").forEach(function (t) { t.classList.toggle("active", t.dataset.tab === m); });
     nameF.hidden = m !== "up";
+    forgotBtn.hidden = m === "up";
     submitBtn.textContent = m === "up" ? "Create account" : "Sign in";
     pwF.autocomplete = m === "up" ? "new-password" : "current-password";
   }
@@ -51,8 +55,19 @@
     if (e.target === modal || act === "close") return closeModal();
     if (tab) return setMode(tab);
     if (act === "submit") return doSubmit();
-    if (act === "google") return doGoogle();
+    if (act === "forgot") return doForgot();
   });
+
+  function doForgot() {
+    var email = emailF.value.trim();
+    clearMsg();
+    if (!email) { errEl.textContent = "Enter your email above first, then tap Forgot password."; return; }
+    errEl.textContent = "…";
+    EBKF.resetPassword(email).then(function () {
+      errEl.classList.add("ok");
+      errEl.textContent = "Reset link sent to " + email + " — check your inbox.";
+    }).catch(function (e) { errEl.classList.remove("ok"); errEl.textContent = pretty(e); });
+  }
 
   function doSubmit() {
     var email = emailF.value.trim(), pw = pwF.value, name = nameF.value.trim();
@@ -77,6 +92,8 @@
     if (c.indexOf("email-already") > -1) return "That email already has an account — sign in.";
     if (c.indexOf("weak-password") > -1) return "Password should be at least 6 characters.";
     if (c.indexOf("invalid-email") > -1) return "Enter a valid email.";
+    if (c.indexOf("user-not-found") > -1) return "No account with that email.";
+    if (c.indexOf("too-many-requests") > -1) return "Too many attempts — try again shortly.";
     if (c.indexOf("operation-not-allowed") > -1) return "Auth isn't enabled yet (admin).";
     if (c.indexOf("popup") > -1) return "Popup blocked — allow popups and retry.";
     return (e && e.message) || "Something went wrong.";

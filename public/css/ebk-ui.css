@@ -36,4 +36,7 @@
 .ebk-btn:active { transform: scale(0.98); }
 .ebk-google { background: var(--glass); color: var(--text); border: 1px solid var(--line); margin-top: 8px; }
 .ebk-err { color: var(--lower); font-size: var(--fs-sm); min-height: 1.2em; margin-top: 8px; }
+.ebk-err.ok { color: var(--accent); }
+.ebk-forgot { display: block; margin: 10px auto 0; background: none; border: none; color: var(--muted); font-size: var(--fs-sm); cursor: pointer; text-decoration: underline; }
+.ebk-forgot[hidden] { display: none; }
 .ebk-or { text-align: center; color: var(--muted); font-size: var(--fs-xs); margin: 12px 0 0; }
