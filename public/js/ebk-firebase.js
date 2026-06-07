@@ -3,14 +3,9 @@
   "use strict";
   if (window.EBKF) return;
 
-  var CONFIG = {
-    apiKey: "FIREBASE_WEB_KEY_REMOVED",
-    authDomain: "nfl-higher-lower-game.firebaseapp.com",
-    projectId: "nfl-higher-lower-game",
-    storageBucket: "nfl-higher-lower-game.firebasestorage.app",
-    messagingSenderId: "82450457447",
-    appId: "1:82450457447:web:5a303331dcc0e7285d45c2",
-  };
+  // Config is NOT hardcoded — it's served by Firebase Hosting at runtime
+  // (/__/firebase/init.json). Keeps the (public-by-design) web apiKey out of
+  // source control. Only resolves on the deployed Firebase Hosting domain.
   var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 
   var EBKF = (window.EBKF = { user: undefined, auth: null, db: null, _cbs: [] });
@@ -25,6 +20,9 @@
 
   EBKF.ready = (async function () {
     try {
+      var res = await fetch("/__/firebase/init.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error("Firebase config unavailable (run on the live site)");
+      var CONFIG = await res.json();
       if (!window.firebase) await load(SDK + "firebase-app-compat.js");
       await load(SDK + "firebase-auth-compat.js");
       await load(SDK + "firebase-firestore-compat.js");
