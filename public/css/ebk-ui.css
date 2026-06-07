@@ -39,4 +39,14 @@
 .ebk-err.ok { color: var(--accent); }
 .ebk-forgot { display: block; margin: 10px auto 0; background: none; border: none; color: var(--muted); font-size: var(--fs-sm); cursor: pointer; text-decoration: underline; }
 .ebk-forgot[hidden] { display: none; }
+.rep-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85em; padding: 0 4px; }
+.rep-btn:hover { color: var(--lower); }
+.rep-btn:disabled { color: var(--accent); cursor: default; }
+/* admin report cards */
+.rep-card { border: 1px solid var(--line); border-radius: 14px; padding: var(--sp-md); margin-bottom: var(--sp-sm); background: var(--glass); }
+.rep-card h3 { margin: 0 0 4px; font-size: var(--fs-lg); }
+.rep-card .cnt { color: var(--lower); font-weight: 800; font-size: var(--fs-sm); }
+.rep-card .reasons { color: var(--muted); font-size: var(--fs-sm); margin: 6px 0 0; }
+.rep-card .acts { display: flex; gap: var(--sp-sm); margin-top: 12px; flex-wrap: wrap; }
+.rep-card .acts .hero-cta { padding: 9px 16px; font-size: var(--fs-sm); }
 .ebk-or { text-align: center; color: var(--muted); font-size: var(--fs-xs); margin: 12px 0 0; }

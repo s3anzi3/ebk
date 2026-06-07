@@ -88,7 +88,8 @@
     if (c === "ebk/name-profane") return "Please choose a cleaner display name.";
     if (c === "ebk/name-taken") return "That display name is taken — try another.";
     if (c === "ebk/name-short") return "Display name must be at least 2 characters.";
-    if (c === "ebk/name-invalid") return "Display name can't contain / . # $ [ ].";
+    if (c === "ebk/name-long") return "Display name must be 20 characters or fewer.";
+    if (c === "ebk/name-invalid") return "Use letters, numbers, spaces and emoji only.";
     if (c.indexOf("wrong-password") > -1 || c.indexOf("invalid-credential") > -1) return "Wrong email or password.";
     if (c.indexOf("email-already") > -1) return "That email already has an account — sign in.";
     if (c.indexOf("weak-password") > -1) return "Password should be at least 6 characters.";
@@ -108,6 +109,7 @@
       var nav = document.createElement("div");
       nav.className = "ebk-nav";
       nav.innerHTML =
+        '<a class="ebk-admin-link" href="/admin" hidden>Admin</a>' +
         '<a href="/leaderboard">Leaderboard</a>' +
         '<a href="/dashboard">Dashboard</a>' +
         '<span class="ebk-acct"></span>';
@@ -116,6 +118,8 @@
     renderAccount(window.EBKF && EBKF.user);
   }
   function renderAccount(user) {
+    var admin = !!(window.EBKF && EBKF.isAdmin && EBKF.isAdmin());
+    document.querySelectorAll(".ebk-admin-link").forEach(function (el) { el.hidden = !admin; });
     document.querySelectorAll(".ebk-acct").forEach(function (el) {
       if (user) {
         el.innerHTML = '<span class="ebk-user"><span class="nm">' +

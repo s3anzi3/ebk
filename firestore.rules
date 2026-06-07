@@ -2,34 +2,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // public profiles (used for leaderboard names)
+    // Admin = the (unique) display name "seanzie". Display names are enforced
+    // unique via the usernames registry, so this identifies exactly one account.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.name == 'seanzie';
+    }
+
     match /users/{uid} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow write: if (request.auth != null && request.auth.uid == uid) || isAdmin();
     }
 
-    // unique display-name registry. Doc id = lowercased name. A create only
-    // succeeds when the doc doesn't exist yet (Firestore semantics) and updates
-    // are forbidden, so two users can never hold the same name. Owners may
-    // release their own name (delete).
+    // unique display-name registry (create-only / update-denied => atomic uniqueness)
     match /usernames/{nameKey} {
       allow read: if true;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow create: if (request.auth != null && request.resource.data.uid == request.auth.uid) || isAdmin();
       allow update: if false;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if (request.auth != null && resource.data.uid == request.auth.uid) || isAdmin();
     }
 
-    // one doc per user per (sport, game): best + aggregate counts.
-    // public read (leaderboards/dashboards), owner-only write, id must
-    // match uid_sport_game so a user can only write their own rows.
+    // one doc per user per (sport, game): best + aggregates. Owner-only writes,
+    // public reads; admins may edit any (for name changes).
     match /scores/{id} {
       allow read: if true;
-      allow create, update: if request.auth != null
+      allow create, update: if isAdmin() || (request.auth != null
         && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + '_' + request.resource.data.sport + '_' + request.resource.data.game
         && request.resource.data.best is number
-        && request.resource.data.plays is number;
-      allow delete: if false;
+        && request.resource.data.plays is number);
+      allow delete: if isAdmin();
+    }
+
+    // name reports: any signed-in user can file; only admins can read/resolve.
+    match /reports/{rid} {
+      allow create: if request.auth != null && request.resource.data.reporter == request.auth.uid;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

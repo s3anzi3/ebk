@@ -32,6 +32,10 @@
       try { await EBKF.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch (e) {}
       EBKF.auth.onAuthStateChanged(function (u) {
         EBKF.user = u;
+        EBKF.profileName = u ? (u.displayName || null) : null;
+        if (u) EBKF.db.collection("users").doc(u.uid).get()
+          .then(function (d) { if (d.exists && d.data().name) EBKF.profileName = d.data().name; })
+          .catch(function () {});
         EBKF._cbs.forEach(function (cb) { try { cb(u); } catch (e) {} });
       });
       return EBKF;
@@ -75,6 +79,24 @@
     for (var i = 0; i < BAD_WORDS.length; i++) if (s.indexOf(BAD_WORDS[i]) > -1) return false;
     return true;
   }
+  // returns an error code or null. Allows letters/numbers/spaces, basic
+  // punctuation, accented Latin and emoji; blocks "fancy"/zalgo/other glyphs.
+  function nameIssues(name) {
+    var chars = Array.from(name || "");
+    if (chars.length < 2) return "ebk/name-short";
+    if (chars.length > 20) return "ebk/name-long";
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i];
+      if (/[A-Za-z0-9 _\-.'’,]/.test(ch)) continue;                  // basic
+      if (/[À-ɏ]/.test(ch)) continue;                           // accented Latin
+      if (ch === "‍" || ch === "️") continue;                   // ZWJ / VS16
+      if (/[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}]/u.test(ch)) continue; // flags / skin tones
+      if (/\p{Extended_Pictographic}/u.test(ch)) continue;               // emoji
+      return "ebk/name-invalid";
+    }
+    if (!nameClean(name)) return "ebk/name-profane";
+    return null;
+  }
 
   EBKF.nameAvailable = async function (name) {
     await EBKF.ready;
@@ -89,9 +111,8 @@
     name = (name || "").trim();
     var key = nameKeyOf(name);
     if ((pw || "").length < 6) throw nameErr("ebk/weak-password", "Password must be at least 6 characters.");
-    if (key.length < 2) throw nameErr("ebk/name-short", "Display name must be at least 2 characters.");
-    if (/[\/.#$\[\]]/.test(key)) throw nameErr("ebk/name-invalid", "Display name has invalid characters.");
-    if (!nameClean(name)) throw nameErr("ebk/name-profane", "Please choose a different display name.");
+    var issue = nameIssues(name);
+    if (issue) throw nameErr(issue, "Invalid display name.");
     // pre-check (avoids creating an account for an obviously-taken name)
     if ((await EBKF.db.collection("usernames").doc(key).get()).exists)
       throw nameErr("ebk/name-taken", "That display name is taken.");
@@ -133,7 +154,7 @@
         var d = await tx.get(ref);
         var p = d.exists ? d.data() : { best: 0, plays: 0, sumScore: 0 };
         tx.set(ref, {
-          uid: u.uid, name: u.displayName || "Player", sport: sport, game: game,
+          uid: u.uid, name: EBKF.profileName || u.displayName || "Player", sport: sport, game: game,
           best: Math.max(p.best || 0, score), plays: (p.plays || 0) + 1,
           sumScore: (p.sumScore || 0) + score, updated: Date.now(),
         }, { merge: true });
@@ -154,5 +175,45 @@
     if (!EBKF.user) return [];
     var q = await EBKF.db.collection("scores").where("uid", "==", EBKF.user.uid).get();
     return q.docs.map(function (d) { return d.data(); });
+  };
+
+  // ---- admin + reporting ----
+  var ADMIN_NAMES = ["seanzie"];
+  EBKF.isAdmin = function () { return !!(EBKF.user && ADMIN_NAMES.indexOf(EBKF.user.displayName) > -1); };
+
+  EBKF.reportName = async function (targetUid, targetName, reason) {
+    await EBKF.ready;
+    if (!EBKF.user) throw new Error("Sign in to report.");
+    return EBKF.db.collection("reports").add({
+      targetUid: targetUid || "", targetName: targetName || "",
+      reporter: EBKF.user.uid, reporterName: EBKF.user.displayName || "",
+      reason: String(reason || "").slice(0, 200), ts: Date.now(),
+    });
+  };
+  EBKF.listReports = async function () {
+    await EBKF.ready;
+    var q = await EBKF.db.collection("reports").get();
+    return q.docs.map(function (d) { var o = d.data(); o.id = d.id; return o; });
+  };
+  EBKF.adminRename = async function (targetUid, newName) {
+    await EBKF.ready;
+    var issue = nameIssues(newName);
+    if (issue) throw nameErr(issue, "Invalid name.");
+    await EBKF.db.collection("users").doc(targetUid)
+      .set({ name: newName, renamedByAdmin: true, updated: Date.now() }, { merge: true });
+    var q = await EBKF.db.collection("scores").where("uid", "==", targetUid).get();
+    if (!q.empty) {
+      var batch = EBKF.db.batch();
+      q.docs.forEach(function (d) { batch.update(d.ref, { name: newName }); });
+      await batch.commit();
+    }
+  };
+  EBKF.dismissReports = async function (targetUid) {
+    await EBKF.ready;
+    var q = await EBKF.db.collection("reports").where("targetUid", "==", targetUid).get();
+    if (q.empty) return;
+    var batch = EBKF.db.batch();
+    q.docs.forEach(function (d) { batch.delete(d.ref); });
+    return batch.commit();
   };
 })();
