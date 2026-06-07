@@ -60,6 +60,12 @@
       notable: [["pyd", 1500], ["ptd", 12], ["ryd", 600], ["rtd", 8], ["recyd", 600],
                 ["rec", 40], ["rectd", 6], ["tkl", 60], ["sk", 6]],
     },
+    soccer: {
+      icon: "⚽", seasonFmt: (y) => (y - 1) + "-" + String(y).slice(2),
+      facts: ["position", "career", "teampath"],
+      posNames: { GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" },
+      notable: [["goals", 3], ["assists", 3], ["minutes", 1500], ["saves", 40], ["pts", 80], ["cs", 8]],
+    },
   }[SPORT];
 
   const getBest = () => { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } };

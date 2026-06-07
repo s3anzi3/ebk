@@ -6,7 +6,7 @@ window.EBK = {
     { key: "nba",    name: "NBA",        emoji: "\u{1F3C0}", accent: "#ff7a3c", status: "live", blurb: "Pro basketball, 2002–2023." },
     { key: "mlb",    name: "MLB",        emoji: "⚾",    accent: "#4aa3ff", status: "live", blurb: "America's pastime, 2000–2021." },
     { key: "nhl",    name: "NHL",        emoji: "\u{1F3D2}", accent: "#5fd0e6", status: "live", blurb: "Pro hockey, 2000–2024." },
-    { key: "soccer", name: "Soccer",     emoji: "⚽",    accent: "#8ee04a", status: "soon", blurb: "The world's game." },
+    { key: "soccer", name: "Soccer",     emoji: "⚽",    accent: "#8ee04a", status: "live", blurb: "Premier League, 2016–2025." },
   ],
 
   // shared game types offered for every sport
@@ -30,6 +30,7 @@ window.EBK = {
     mlb: ["higher-lower", "stat-line", "career-path", "player-grid", "team"],
     nhl: ["higher-lower", "stat-line", "career-path", "player-grid", "team"],
     cfb: ["higher-lower", "stat-line", "career-path", "team"],
+    soccer: ["higher-lower", "stat-line", "career-path", "player-grid", "team"],
   },
 
   sport: function (key) { return this.sports.find(function (s) { return s.key === key; }); },

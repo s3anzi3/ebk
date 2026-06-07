@@ -71,6 +71,17 @@
       flags: [],
       posKey: "grp",
     },
+    soccer: {
+      ach: [
+        ["g15", "15+ Goals", "goals", 15], ["g20", "20+ Goals", "goals", 20],
+        ["a10", "10+ Assists", "assists", 10], ["cs15", "15+ Clean Sheets", "cs", 15],
+        ["sv100", "100+ Saves", "saves", 100], ["pts150", "150+ FPL Pts", "pts", 150],
+        ["min3000", "3,000+ Minutes", "minutes", 3000],
+      ],
+      positions: [["GK", "Keeper"], ["DEF", "Defender"], ["MID", "Midfielder"], ["FWD", "Forward"]],
+      flags: [],
+      posKey: "grp",
+    },
   }[SPORT];
   const ACH = CFG.ach;
 

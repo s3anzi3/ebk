@@ -91,6 +91,17 @@
       notable: [["pyd", 1500], ["ptd", 12], ["ryd", 600], ["rtd", 8], ["recyd", 600],
                 ["rec", 40], ["rectd", 6], ["tkl", 60], ["sk", 6]],
     },
+    soccer: {
+      yMin: 2017, yMax: 2025, seasonFmt: (y) => (y - 1) + "-" + String(y).slice(2),
+      display: [
+        ["goals", "Goals"], ["assists", "Assists"], ["minutes", "Minutes"], ["cs", "Clean Sheets"],
+        ["saves", "Saves"], ["gc", "Goals Conceded"], ["bonus", "Bonus Pts"], ["pts", "FPL Points"],
+      ],
+      dec: {},
+      posNames: { GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" },
+      sides: { GK: "gk", DEF: "out", MID: "out", FWD: "out" },
+      notable: [["goals", 3], ["assists", 3], ["minutes", 1500], ["saves", 40], ["pts", 80], ["cs", 8]],
+    },
   }[SPORT];
 
   const fmt = (v, d = 0) => Number(v).toLocaleString("en-US", { maximumFractionDigits: d });

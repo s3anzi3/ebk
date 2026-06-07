@@ -90,6 +90,20 @@
         DB: ["tkl", "tfl", "sk"],
       },
     },
+    soccer: {
+      seasons: "2016–2025",
+      groups: ["all", "GK", "DEF", "MID", "FWD"],
+      labels: { goals: "G", assists: "A", minutes: "Min", cs: "CS", saves: "Sv",
+                gc: "GC", bonus: "Bns", pts: "Pts" },
+      dec: {},
+      colsets: {
+        all: ["goals", "assists", "pts"],
+        GK: ["cs", "saves", "gc", "pts"],
+        DEF: ["goals", "assists", "cs", "pts"],
+        MID: ["goals", "assists", "minutes", "pts"],
+        FWD: ["goals", "assists", "minutes", "pts"],
+      },
+    },
   }[SPORT];
 
   const S = { rows: [], teamKey: "", group: "all", from: 0, to: 9999, q: "",
