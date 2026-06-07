@@ -68,6 +68,9 @@
   }
   function pretty(e) {
     var c = (e && e.code) || "";
+    if (c === "ebk/name-taken") return "That display name is taken — try another.";
+    if (c === "ebk/name-short") return "Display name must be at least 2 characters.";
+    if (c === "ebk/name-invalid") return "Display name can't contain / . # $ [ ].";
     if (c.indexOf("wrong-password") > -1 || c.indexOf("invalid-credential") > -1) return "Wrong email or password.";
     if (c.indexOf("email-already") > -1) return "That email already has an account — sign in.";
     if (c.indexOf("weak-password") > -1) return "Password should be at least 6 characters.";

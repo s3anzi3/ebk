@@ -54,10 +54,36 @@
       .catch(function () {});
   }
 
+  function nameErr(code, msg) { var e = new Error(msg); e.code = code; return e; }
+  function nameKeyOf(name) { return (name || "").trim().toLowerCase(); }
+
+  EBKF.nameAvailable = async function (name) {
+    await EBKF.ready;
+    var key = nameKeyOf(name);
+    if (key.length < 2) return false;
+    var s = await EBKF.db.collection("usernames").doc(key).get();
+    return !s.exists;
+  };
+
   EBKF.signUp = async function (email, pw, name) {
     await EBKF.ready;
+    name = (name || "").trim();
+    var key = nameKeyOf(name);
+    if (key.length < 2) throw nameErr("ebk/name-short", "Display name must be at least 2 characters.");
+    if (/[\/.#$\[\]]/.test(key)) throw nameErr("ebk/name-invalid", "Display name has invalid characters.");
+    // pre-check (avoids creating an account for an obviously-taken name)
+    if ((await EBKF.db.collection("usernames").doc(key).get()).exists)
+      throw nameErr("ebk/name-taken", "That display name is taken.");
+
     var c = await EBKF.auth.createUserWithEmailAndPassword(email, pw);
-    if (name) await c.user.updateProfile({ displayName: name });
+    try {
+      // atomic claim: a second user claiming the same key hits update(=denied)
+      await EBKF.db.collection("usernames").doc(key).set({ uid: c.user.uid, name: name, created: Date.now() });
+    } catch (err) {
+      try { await c.user.delete(); } catch (e) {}
+      throw nameErr("ebk/name-taken", "That display name was just taken — try another.");
+    }
+    await c.user.updateProfile({ displayName: name });
     await saveUser(c.user, name);
     return c.user;
   };

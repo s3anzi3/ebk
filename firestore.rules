@@ -8,6 +8,17 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // unique display-name registry. Doc id = lowercased name. A create only
+    // succeeds when the doc doesn't exist yet (Firestore semantics) and updates
+    // are forbidden, so two users can never hold the same name. Owners may
+    // release their own name (delete).
+    match /usernames/{nameKey} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
     // one doc per user per (sport, game): best + aggregate counts.
     // public read (leaderboards/dashboards), owner-only write, id must
     // match uid_sport_game so a user can only write their own rows.
