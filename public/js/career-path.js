@@ -14,6 +14,64 @@
   (function () { if (!window.EBKF) { var s = document.createElement("script"); s.src = "/js/ebk-firebase.js"; document.head.appendChild(s); } })();
   const ebkRecord = (score) => { try { window.EBKF && EBKF.recordScore(SPORT, "career-path", score); } catch (e) {} };
   const REVEALS = 5;
+  const ROUND_MS = 20000;               // per-round clock; timeout ends the run
+
+  // ---- round timer ----
+  let rtTO = null, rtLowTO = null, rtEl = null;
+  function rtBar() {
+    if (rtEl) return rtEl;
+    rtEl = document.createElement("div");
+    rtEl.className = "round-timer";
+    rtEl.innerHTML = '<div class="fill"></div>';
+    $("#game").prepend(rtEl);
+    return rtEl;
+  }
+  function rtStart() {
+    const fill = $(".fill", rtBar());
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    fill.classList.remove("low");
+    fill.style.transition = "none";
+    fill.style.width = "100%";
+    void fill.offsetWidth;
+    fill.style.transition = `width ${ROUND_MS}ms linear`;
+    fill.style.width = "0%";
+    rtLowTO = setTimeout(() => { if (!S.solved) fill.classList.add("low"); }, ROUND_MS - 5000);
+    rtTO = setTimeout(timeUp, ROUND_MS);
+  }
+  function rtStop() {
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    if (!rtEl) return;
+    const fill = $(".fill", rtEl);
+    fill.style.transition = "none";
+    fill.style.width = getComputedStyle(fill).width;
+  }
+
+  function timeUp() {
+    if (S.solved) return;
+    S.solved = true;
+    S.wrongId = null;
+    rtStop();
+    ebkRecord(S.score);
+    render();                                  // disables options, highlights answer
+    const banner = $("#banner");
+    banner.textContent = "⏱ Time's up — run over!";
+    banner.className = "banner bad";
+    showReveal(S.mystery);
+    addBtn("New run", "primary", newRun);
+    addBtn("Back to EBK", "ghost", () => (location.href = "/" + SPORT));
+  }
+
+  // cache the reveal photo so it never pops in late
+  function preloadImg(src, ms = 1800) {
+    return new Promise((resolve) => {
+      if (!src) return resolve();
+      const img = new Image();
+      const done = () => { clearTimeout(to); resolve(); };
+      const to = setTimeout(done, ms);
+      img.onload = done; img.onerror = done;
+      img.src = src;
+    });
+  }
 
   const CFG = {
     nfl: {
@@ -173,7 +231,9 @@
     $("#banner").textContent = ""; $("#banner").className = "banner";
     $("#reveal").hidden = true;
     $("#next-row").hidden = true; $("#next-row").innerHTML = "";
+    preloadImg(S.mystery.headshot);                  // reveal photo, ahead of time
     render();
+    rtStart();
   }
 
   function render() {
@@ -215,6 +275,7 @@
   function guess(id) {
     if (S.solved) return;
     S.solved = true;
+    rtStop();
     const c = S.mystery;
     const correct = id === c.id;
     S.wrongId = correct ? null : id;

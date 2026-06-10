@@ -5,8 +5,9 @@
   <script src="/js/ebk-loader.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0e1c" />
-  <meta name="description" content="EBK — Elite Ball Knowledge. Prove your sports knowledge across a growing arcade of games and compete against other players." />
+  <meta name="description" content="EBK — Elite Ball Knowledge. Prove your sports knowledge across NFL, NBA, MLB, NHL, College Football and Soccer games. Build streaks, climb leaderboards." />
   <title>EBK — Elite Ball Knowledge</title>
+  <link rel="preconnect" href="https://a.espncdn.com" crossorigin />
   <link rel="preconnect" href="https://static.www.nfl.com" crossorigin />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/home.css" />
@@ -24,13 +25,13 @@
   <main>
     <section class="hero wrap">
       <h1 class="rise">How <span class="accent">elite</span> is your ball knowledge?</h1>
-      <p class="rise d1">A growing arcade of sports games that put your knowledge to the test — build streaks, climb the ranks, and compete against other players. Pick a sport to begin.</p>
-      <a class="hero-cta rise d2" href="/nfl">🏈 Enter the NFL arcade</a>
+      <p class="rise d1">Six sports: football, basketball, baseball, hockey, college ball and soccer. A growing arcade of games that put your knowledge to the test. Build streaks, climb the leaderboards, prove it.</p>
+      <a class="hero-cta rise d2" href="#sports">Choose your sport ↓</a>
       <div class="logo-strip rise d3" id="logo-strip" aria-hidden="true"></div>
     </section>
 
     <div class="wrap">
-      <section class="sport-section" aria-label="Choose your sport">
+      <section class="sport-section" id="sports" aria-label="Choose your sport">
         <div class="sport-head">
           <span class="sport-icon">🎮</span>
           <h2 class="sport-name">Choose your sport</h2>
@@ -42,60 +43,20 @@
   </main>
 
   <footer class="site-footer">
-    <p>EBK · Elite Ball Knowledge &nbsp;·&nbsp; NFL data from
-       <a href="https://github.com/nflverse/nflverse-data">nflverse</a></p>
+    <p>EBK · Elite Ball Knowledge &nbsp;·&nbsp; stats from public sources: nflverse, ESPN, Lahman, NHL, CFBD, FPL</p>
+    <p class="legal-links"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · Not affiliated with any league. Logos and trademarks belong to their owners.</p>
   </footer>
 
   <script src="/js/catalog.js"></script>
   <script src="/js/ebk-ui.js"></script>
   <script src="/js/teams.js"></script>
-  <script>
-    // football-field marquee
-    (function () {
-      var strip = document.getElementById("logo-strip");
-      if (strip && window.NFL) {
-        var track = document.createElement("div");
-        track.className = "logo-track";
-        for (var pass = 0; pass < 2; pass++) {
-          NFL.franchises.forEach(function (f) {
-            var a = document.createElement("a");
-            a.className = "strip-logo";
-            a.href = "/nfl/team?t=" + f.key;
-            a.title = f.name;
-            if (pass === 1) a.setAttribute("aria-hidden", "true");
-            var img = document.createElement("img");
-            img.src = NFL.logo(f.key); img.alt = f.name; img.loading = "lazy";
-            a.appendChild(img);
-            track.appendChild(a);
-          });
-        }
-        strip.appendChild(track);
-      }
-    })();
-
-    // sports grid
-    (function () {
-      var grid = document.getElementById("sports-grid");
-      if (!grid || !window.EBK) return;
-      var liveCount = 0;
-      EBK.sports.forEach(function (s) {
-        var live = EBK.sportLive(s.key);
-        if (live) liveCount++;
-        var a = document.createElement("a");
-        a.className = "game-card live sport-card";
-        a.href = "/" + s.key;
-        a.style.setProperty("--accent", s.accent);
-        a.innerHTML =
-          '<span class="badge ' + (live ? "play" : "soon") + '">' + (live ? "Play" : "Soon") + "</span>" +
-          '<span class="game-emoji">' + s.emoji + "</span>" +
-          '<h3 class="game-title">' + s.name + "</h3>" +
-          '<p class="game-desc">' + s.blurb + "</p>" +
-          '<span class="game-foot">' + (live ? "5 games live" : "Preview games") + "</span>";
-        grid.appendChild(a);
-      });
-      var c = document.getElementById("sport-count");
-      if (c) c.textContent = liveCount + " live · " + (EBK.sports.length - liveCount) + " coming soon";
-    })();
-  </script>
+  <script src="/js/nba-teams.js"></script>
+  <script src="/js/mlb-teams.js"></script>
+  <script src="/js/nhl-teams.js"></script>
+  <script src="/js/cfb-teams.js"></script>
+  <script src="/js/soccer-teams.js"></script>
+  <script src="/js/sport-banner.js"></script>
+  <script src="/js/home.js"></script>
+  <script src="/js/fx.js"></script>
 </body>
 </html>

@@ -126,7 +126,11 @@
       throw nameErr("ebk/name-taken", "That display name was just taken — try another.");
     }
     await c.user.updateProfile({ displayName: name });
-    await saveUser(c.user, name);
+    // record acceptance of Terms/Privacy alongside the profile
+    await EBKF.db.collection("users").doc(c.user.uid)
+      .set({ name: name, updated: Date.now(), agreedTerms: Date.now() }, { merge: true })
+      .catch(function () {});
+    try { c.user.sendEmailVerification(); } catch (e) {}
     return c.user;
   };
   EBKF.signIn = async function (email, pw) {
@@ -143,21 +147,45 @@
   EBKF.signOut = async function () { await EBKF.ready; return EBKF.auth.signOut(); };
   EBKF.resetPassword = async function (email) { await EBKF.ready; return EBKF.auth.sendPasswordResetEmail(email); };
 
-  // record a finished run: keep best + running totals per (sport, game)
+  // record a finished run: keep best + running totals per (sport, game), and
+  // roll the player's totals doc (overall / per-sport / per-game sums of bests)
+  // for the aggregate leaderboards. Client-side throttle backs the rules-side
+  // rate limit.
+  var gameField = function (game) { return "g_" + String(game).replace(/-/g, "_"); };
   EBKF.recordScore = async function (sport, game, score) {
     try {
       await EBKF.ready;
       var u = EBKF.user;
       if (!u || score == null || isNaN(score)) return;
+      score = Math.max(0, Math.min(100000, Math.floor(score)));
+      var now = Date.now();
+      if (EBKF._lastRec && now - EBKF._lastRec < 3000) return;   // throttle
+      EBKF._lastRec = now;
+      var name = EBKF.profileName || u.displayName || "Player";
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
       var ref = EBKF.db.collection("scores").doc(u.uid + "_" + sport + "_" + game);
+      var tref = EBKF.db.collection("totals").doc(u.uid);
       await EBKF.db.runTransaction(async function (tx) {
         var d = await tx.get(ref);
+        var t = await tx.get(tref);
         var p = d.exists ? d.data() : { best: 0, plays: 0, sumScore: 0 };
+        var newBest = Math.max(p.best || 0, score);
+        var delta = newBest - (p.best || 0);
         tx.set(ref, {
-          uid: u.uid, name: EBKF.profileName || u.displayName || "Player", sport: sport, game: game,
-          best: Math.max(p.best || 0, score), plays: (p.plays || 0) + 1,
-          sumScore: (p.sumScore || 0) + score, updated: Date.now(),
+          uid: u.uid, name: name, sport: sport, game: game,
+          best: newBest, plays: (p.plays || 0) + 1,
+          sumScore: (p.sumScore || 0) + score, updated: ts,
         }, { merge: true });
+        var td = t.exists ? t.data() : {};
+        var patch = {
+          uid: u.uid, name: name, updated: ts,
+          overall: (td.overall || 0) + delta,
+          plays: (td.plays || 0) + 1,
+          score: (td.score || 0) + score,
+        };
+        patch["s_" + sport] = (td["s_" + sport] || 0) + delta;
+        patch[gameField(game)] = (td[gameField(game)] || 0) + delta;
+        tx.set(tref, patch, { merge: true });
       });
     } catch (e) { console.warn("recordScore failed", e); }
   };
@@ -170,6 +198,15 @@
       .orderBy("best", "desc").limit(n || 100).get();
     return q.docs.map(function (d) { return d.data(); });
   };
+  // aggregate boards from the totals collection. field: "overall" | "plays" |
+  // "s_<sport>" | "g_<game-with-underscores>"
+  EBKF.topTotals = async function (field, n) {
+    await EBKF.ready;
+    var q = await EBKF.db.collection("totals")
+      .orderBy(field, "desc").limit(n || 100).get();
+    return q.docs.map(function (d) { return d.data(); });
+  };
+  EBKF.gameField = gameField;
   EBKF.myScores = async function () {
     await EBKF.ready;
     if (!EBKF.user) return [];
@@ -207,6 +244,40 @@
       q.docs.forEach(function (d) { batch.update(d.ref, { name: newName }); });
       await batch.commit();
     }
+    await EBKF.db.collection("totals").doc(targetUid)
+      .set({ name: newName }, { merge: true }).catch(function () {});
+  };
+
+  // one-time backfill: rebuild every user's totals doc from their score docs
+  // (for accounts that played before aggregate leaderboards existed)
+  EBKF.adminBackfillTotals = async function () {
+    await EBKF.ready;
+    var q = await EBKF.db.collection("scores").get();
+    var byUid = {};
+    q.docs.forEach(function (d) {
+      var r = d.data();
+      if (!r.uid) return;
+      var t = byUid[r.uid] || (byUid[r.uid] = {
+        uid: r.uid, name: r.name || "Player", overall: 0, plays: 0, score: 0,
+      });
+      t.overall += r.best || 0;
+      t.plays += r.plays || 0;
+      t.score += r.sumScore || 0;
+      t["s_" + r.sport] = (t["s_" + r.sport] || 0) + (r.best || 0);
+      t[gameField(r.game)] = (t[gameField(r.game)] || 0) + (r.best || 0);
+    });
+    var uids = Object.keys(byUid), n = 0;
+    for (var i = 0; i < uids.length; i += 400) {
+      var batch = EBKF.db.batch();
+      uids.slice(i, i + 400).forEach(function (uid) {
+        var t = byUid[uid];
+        t.updated = firebase.firestore.FieldValue.serverTimestamp();
+        batch.set(EBKF.db.collection("totals").doc(uid), t);
+        n++;
+      });
+      await batch.commit();
+    }
+    return n;
   };
   EBKF.dismissReports = async function (targetUid) {
     await EBKF.ready;

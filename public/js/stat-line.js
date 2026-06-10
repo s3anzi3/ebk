@@ -115,6 +115,67 @@
   const posName = (p) => CFG.posNames[p] || p;
 
   const EXACT_REVEALS = 5;
+  const ROUND_MS = 20000;               // per-round clock; timeout ends the run
+
+  // ---- round timer ----
+  let rtTO = null, rtLowTO = null, rtEl = null;
+  function rtBar() {
+    if (rtEl) return rtEl;
+    rtEl = document.createElement("div");
+    rtEl.className = "round-timer";
+    rtEl.innerHTML = '<div class="fill"></div>';
+    $("#game").prepend(rtEl);
+    return rtEl;
+  }
+  function rtStart() {
+    const fill = $(".fill", rtBar());
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    fill.classList.remove("low");
+    fill.style.transition = "none";
+    fill.style.width = "100%";
+    void fill.offsetWidth;
+    fill.style.transition = `width ${ROUND_MS}ms linear`;
+    fill.style.width = "0%";
+    rtLowTO = setTimeout(() => { if (!S.locked) fill.classList.add("low"); }, ROUND_MS - 5000);
+    rtTO = setTimeout(timeUp, ROUND_MS);
+  }
+  function rtStop() {
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    if (!rtEl) return;
+    const fill = $(".fill", rtEl);
+    fill.style.transition = "none";
+    fill.style.width = getComputedStyle(fill).width;
+  }
+
+  function timeUp() {
+    if (S.locked) return;
+    S.locked = true;
+    rtStop();
+    ebkRecord(S.score);
+    [...$("#options").children].forEach((b, i) => {
+      b.disabled = true;
+      if (S.options[i].id === S.answerId) b.classList.add("correct");
+    });
+    $("#lifelines").hidden = true;
+    const banner = $("#banner");
+    banner.textContent = "⏱ Time's up — run over!";
+    banner.className = "banner bad";
+    showReveal(S.mystery);
+    addBtn("New run", "primary", newRun);
+    addBtn("Back to EBK", "ghost", () => (location.href = "/" + SPORT));
+  }
+
+  // cache the reveal photo so it never pops in late
+  function preloadImg(src, ms = 1800) {
+    return new Promise((resolve) => {
+      if (!src) return resolve();
+      const img = new Image();
+      const done = () => { clearTimeout(to); resolve(); };
+      const to = setTimeout(done, ms);
+      img.onload = done; img.onerror = done;
+      img.src = src;
+    });
+  }
 
   const S = {
     players: [], byId: new Map(), posIndex: new Map(), sideIndex: {}, notable: [],
@@ -188,7 +249,9 @@
     S.range = seasonRange(S.mystery.season);
     S.locked = false;
     S.options = pickOptions(S.mystery);
+    preloadImg(S.mystery.headshot);                  // reveal photo, ahead of time
     render();
+    rtStart();
   }
 
   function render() {
@@ -227,6 +290,7 @@
   function guess(id, btn) {
     if (S.locked) return;
     S.locked = true;
+    rtStop();
     const correct = id === S.answerId;
     const m = S.mystery;
     [...$("#options").children].forEach((b, i) => {

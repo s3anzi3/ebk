@@ -3,7 +3,10 @@
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
   var sportName = {}, sportEmoji = {}, gameName = {};
-  (window.EBK ? EBK.sports : []).forEach(function (s) { sportName[s.key] = s.name; sportEmoji[s.key] = s.emoji; });
+  (window.EBK ? EBK.sports : []).forEach(function (s) {
+    sportName[s.key] = s.name;
+    sportEmoji[s.key] = EBK.logoTag ? EBK.logoTag(s) : s.emoji;
+  });
   (window.EBK ? EBK.games : []).forEach(function (g) { gameName[g.slug] = g.title; });
 
   $("#signin-cta") && $("#signin-cta").addEventListener("click", function () { window.EBKopenAuth && EBKopenAuth(); });

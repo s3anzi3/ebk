@@ -56,10 +56,23 @@
     }
   });
 
+  var bf = $("#backfill");
+  if (bf) bf.addEventListener("click", function () {
+    if (!confirm("Rebuild totals for every player from their score docs?")) return;
+    bf.disabled = true;
+    $("#backfill-msg").textContent = "Working…";
+    EBKF.adminBackfillTotals()
+      .then(function (n) { $("#backfill-msg").textContent = "Done — " + n + " player totals rebuilt."; })
+      .catch(function (e) { $("#backfill-msg").textContent = "Failed: " + (e && e.message || e); })
+      .finally(function () { bf.disabled = false; });
+  });
+
   function start() {
     if (!(window.EBKF && EBKF.onChange)) return setTimeout(start, 60);
     EBKF.onChange(function () {
-      if (!EBKF.isAdmin()) {
+      var admin = EBKF.isAdmin();
+      $("#tools").hidden = !admin;
+      if (!admin) {
         $("#loading").hidden = true; $("#none").hidden = true;
         $("#reports").innerHTML = ""; $("#denied").hidden = false;
         return;

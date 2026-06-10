@@ -25,8 +25,15 @@
     </section>
     <div class="wrap" style="max-width:760px">
       <div class="filters" style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-bottom:var(--sp-md)">
-        <span class="field">Sport <select id="sport" class="search"></select></span>
-        <span class="field">Game <select id="game" class="search"></select></span>
+        <span class="field">Ranking <select id="cat" class="search">
+          <option value="game">Best run · sport + game</option>
+          <option value="sport">Sport total · all games</option>
+          <option value="game-all">Game total · all sports</option>
+          <option value="overall">Overall total · everything</option>
+          <option value="plays">Most games played</option>
+        </select></span>
+        <span class="field" id="sport-field">Sport <select id="sport" class="search"></select></span>
+        <span class="field" id="game-field">Game <select id="game" class="search"></select></span>
       </div>
       <p class="count" id="status"></p>
       <div class="table-wrap">

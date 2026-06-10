@@ -23,9 +23,15 @@
     '<h3>Welcome to EBK</h3><p class="sub">Save your scores and climb the leaderboards.</p>' +
     '<div class="ebk-tabs"><button class="ebk-tab active" data-tab="in">Sign in</button>' +
     '<button class="ebk-tab" data-tab="up">Sign up</button></div>' +
-    '<input class="ebk-field" id="ebk-name" placeholder="Display name" hidden autocomplete="nickname" />' +
+    '<div class="ebk-namewrap" hidden>' +
+    '<input class="ebk-field" id="ebk-name" placeholder="Display name (public)" autocomplete="nickname" maxlength="20" />' +
+    '<span class="ebk-avail" id="ebk-avail"></span></div>' +
     '<input class="ebk-field" id="ebk-email" type="email" placeholder="Email" autocomplete="email" />' +
+    '<div class="ebk-pwwrap">' +
     '<input class="ebk-field" id="ebk-pw" type="password" placeholder="Password" autocomplete="current-password" />' +
+    '<button class="ebk-eye" data-act="eye" type="button" aria-label="Show password">👁</button></div>' +
+    '<label class="ebk-consent" hidden><input type="checkbox" id="ebk-agree" /> <span>I\'m 13 or older and I agree to the ' +
+    '<a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</span></label>' +
     '<div class="ebk-err" id="ebk-err"></div>' +
     '<button class="ebk-btn" data-act="submit">Sign in</button>' +
     '<button class="ebk-forgot" data-act="forgot">Forgot password?</button>' +
@@ -36,7 +42,11 @@
   var nameF = modal.querySelector("#ebk-name"), emailF = modal.querySelector("#ebk-email"),
       pwF = modal.querySelector("#ebk-pw"), errEl = modal.querySelector("#ebk-err"),
       submitBtn = modal.querySelector('[data-act="submit"]'),
-      forgotBtn = modal.querySelector(".ebk-forgot");
+      forgotBtn = modal.querySelector(".ebk-forgot"),
+      nameWrap = modal.querySelector(".ebk-namewrap"),
+      availEl = modal.querySelector("#ebk-avail"),
+      consentEl = modal.querySelector(".ebk-consent"),
+      agreeF = modal.querySelector("#ebk-agree");
 
   function clearMsg() { errEl.textContent = ""; errEl.classList.remove("ok"); }
   function openModal() { modal.hidden = false; clearMsg(); emailF.focus(); }
@@ -44,11 +54,28 @@
   function setMode(m) {
     mode = m; clearMsg();
     modal.querySelectorAll(".ebk-tab").forEach(function (t) { t.classList.toggle("active", t.dataset.tab === m); });
-    nameF.hidden = m !== "up";
+    nameWrap.hidden = m !== "up";
+    consentEl.hidden = m !== "up";
     forgotBtn.hidden = m === "up";
     submitBtn.textContent = m === "up" ? "Create account" : "Sign in";
     pwF.autocomplete = m === "up" ? "new-password" : "current-password";
   }
+
+  // live display-name availability (debounced)
+  var availTO = null;
+  nameF.addEventListener("input", function () {
+    clearTimeout(availTO);
+    var v = nameF.value.trim();
+    availEl.textContent = ""; availEl.className = "ebk-avail";
+    if (v.length < 2 || !window.EBKF || !EBKF.nameAvailable) return;
+    availTO = setTimeout(function () {
+      EBKF.nameAvailable(v).then(function (free) {
+        if (nameF.value.trim() !== v) return;       // stale
+        availEl.textContent = free ? "✓ available" : "✕ taken";
+        availEl.className = "ebk-avail " + (free ? "ok" : "no");
+      }).catch(function () {});
+    }, 350);
+  });
 
   modal.addEventListener("click", function (e) {
     var act = e.target.dataset.act, tab = e.target.dataset.tab;
@@ -56,6 +83,10 @@
     if (tab) return setMode(tab);
     if (act === "submit") return doSubmit();
     if (act === "forgot") return doForgot();
+    if (act === "eye") {
+      pwF.type = pwF.type === "password" ? "text" : "password";
+      e.target.setAttribute("aria-label", pwF.type === "password" ? "Show password" : "Hide password");
+    }
   });
 
   function doForgot() {
@@ -73,6 +104,10 @@
     var email = emailF.value.trim(), pw = pwF.value, name = nameF.value.trim();
     if (!email || !pw) { errEl.textContent = "Email and password required."; return; }
     if (mode === "up" && pw.length < 6) { errEl.textContent = "Password must be at least 6 characters."; return; }
+    if (mode === "up" && !agreeF.checked) {
+      errEl.textContent = "Please confirm you're 13+ and agree to the Terms & Privacy Policy.";
+      return;
+    }
     submitBtn.disabled = true; errEl.textContent = "…";
     var p = mode === "up" ? EBKF.signUp(email, pw, name || email.split("@")[0]) : EBKF.signIn(email, pw);
     p.then(closeModal).catch(function (e) { errEl.textContent = pretty(e); })

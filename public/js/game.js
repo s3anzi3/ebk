@@ -10,7 +10,7 @@
   (function () { if (!window.EBKF) { var s = document.createElement("script"); s.src = "/js/ebk-firebase.js"; document.head.appendChild(s); } })();
   const ebkRecord = (score) => { try { window.EBKF && EBKF.recordScore(SPORT, "higher-lower", score); } catch (e) {} };
   const REVEAL_PAUSE = 1100;            // ms to admire the reveal before advancing
-  const TIME_LIMIT = 10000;             // ms to make each higher/lower guess
+  const TIME_LIMIT = 7000;              // ms to make each higher/lower guess
   const $ = (sel, root = document) => root.querySelector(sel);
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const A = () => (reduceMotion ? null : window.anime); // anime.js if loaded & motion allowed
@@ -52,6 +52,22 @@
     document.querySelectorAll(".screen").forEach((s) => s.classList.remove("is-active"));
     $("#" + id).classList.add("is-active");
   }
+
+  // Resolve once an image is cached (or after a short timeout / on error) so
+  // panels never render with a half-loaded photo popping in.
+  function preloadImg(src, ms = 1800) {
+    return new Promise((resolve) => {
+      if (!src) return resolve();
+      const img = new Image();
+      const done = () => { clearTimeout(to); resolve(); };
+      const to = setTimeout(done, ms);
+      img.onload = done; img.onerror = done;
+      img.src = src;
+    });
+  }
+  const preloadPlayer = (p) =>
+    Promise.all([preloadImg(p && p.headshot),
+                 preloadImg(p && p.team && LEAGUE ? LEAGUE.logo(p.team) : null, 1200)]);
 
   // Count a number element from 0 -> value with anime.js, or set instantly.
   function countTo(el, value, decimals) {
@@ -130,8 +146,11 @@
     $("#hud-cat").textContent = `${cat.icon} ${cat.label}`;
     $("#streak").textContent = "0";
     $("#best").textContent = state.best;
-    showScreen("screen-game");
-    renderRound(true);
+    // wait for both photos before the panels appear (timer starts after)
+    Promise.all([preloadPlayer(state.anchor), preloadPlayer(state.challenger)]).then(() => {
+      showScreen("screen-game");
+      renderRound(true);
+    });
   }
 
   // Different player-season whose value isn't an exact tie with the anchor.
@@ -172,7 +191,7 @@
     void fill.offsetWidth;                       // flush so the transition restarts
     fill.style.transition = `width ${TIME_LIMIT}ms linear`;
     fill.style.width = "0%";
-    timerLowTO = setTimeout(() => { if (!state.locked) fill.classList.add("low"); }, TIME_LIMIT - 3000);
+    timerLowTO = setTimeout(() => { if (!state.locked) fill.classList.add("low"); }, TIME_LIMIT - 2500);
     timerTO = setTimeout(timeUp, TIME_LIMIT);
   }
 
@@ -241,6 +260,10 @@
 
     $("#verdict").className = "verdict";
 
+    // coin-spin the VS badge for the new matchup
+    const vs = $(".vs-badge");
+    if (vs && !reduceMotion) { vs.classList.remove("spin"); void vs.offsetWidth; vs.classList.add("spin"); }
+
     const anime = A();
     if (animateIn && anime) {
       anime({
@@ -277,6 +300,9 @@
     if (correct) {
       state.streak += 1;
       bumpStreak();
+      // pick + preload the next challenger during the reveal pause
+      state.next = pickChallenger(state.challenger);
+      state.nextReady = preloadPlayer(state.next);
       verdict.textContent = "Correct! +1";
       verdict.className = "verdict good show";
       setTimeout(advance, REVEAL_PAUSE);
@@ -301,7 +327,9 @@
 
   function advance() {
     state.anchor = state.challenger;          // challenger becomes the new anchor
-    state.challenger = pickChallenger(state.anchor);
+    state.challenger = state.next || pickChallenger(state.anchor);
+    const ready = state.nextReady || Promise.resolve();
+    state.next = null; state.nextReady = null;
     const anime = A();
     if (anime) {
       // slide the round upward: anchor takes over, fresh challenger enters
@@ -311,10 +339,10 @@
         translateY: [0, -12],
         duration: 180,
         easing: "easeInCubic",
-        complete: () => renderRound(true),
+        complete: () => ready.then(() => renderRound(true)),
       });
     } else {
-      renderRound(true);
+      ready.then(() => renderRound(true));
     }
   }
 

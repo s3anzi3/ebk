@@ -1,13 +1,27 @@
 /* EBK catalog — single source of truth for sports + games. */
 window.EBK = {
   sports: [
-    { key: "nfl",    name: "NFL",        emoji: "\u{1F3C8}", accent: "#3ddc97", status: "live", blurb: "Pro football, 1999–present." },
-    { key: "cfb",    name: "College FB", emoji: "\u{1F3DF}️", accent: "#f4a300", status: "live", blurb: "FBS, 2014–2024." },
-    { key: "nba",    name: "NBA",        emoji: "\u{1F3C0}", accent: "#ff7a3c", status: "live", blurb: "Pro basketball, 2002–2023." },
-    { key: "mlb",    name: "MLB",        emoji: "⚾",    accent: "#4aa3ff", status: "live", blurb: "America's pastime, 2000–2021." },
-    { key: "nhl",    name: "NHL",        emoji: "\u{1F3D2}", accent: "#5fd0e6", status: "live", blurb: "Pro hockey, 2000–2024." },
-    { key: "soccer", name: "Soccer",     emoji: "⚽",    accent: "#8ee04a", status: "live", blurb: "Premier League, 2016–2025." },
+    { key: "nfl",    name: "NFL",        emoji: "\u{1F3C8}", accent: "#3ddc97", status: "live", blurb: "Pro football, 1999–present.",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
+    { key: "cfb",    name: "College FB", emoji: "\u{1F3DF}️", accent: "#f4a300", status: "live", blurb: "FBS, 2014–2024.",
+      logo: "https://a.espncdn.com/i/espn/misc_logos/500/ncaa_football.png" },
+    { key: "nba",    name: "NBA",        emoji: "\u{1F3C0}", accent: "#ff7a3c", status: "live", blurb: "Pro basketball, 2002–2023.",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" },
+    { key: "mlb",    name: "MLB",        emoji: "⚾",    accent: "#4aa3ff", status: "live", blurb: "America's pastime, 2000–2021.",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },
+    { key: "nhl",    name: "NHL",        emoji: "\u{1F3D2}", accent: "#5fd0e6", status: "live", blurb: "Pro hockey, 2000–2024.",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
+    { key: "soccer", name: "Soccer",     emoji: "⚽",    accent: "#8ee04a", status: "live", blurb: "Premier League, 2016–2025.",
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
   ],
+
+  // small league-logo <img> (falls back to the emoji if the logo can't load)
+  logoTag: function (s, cls) {
+    if (!s) return "";
+    if (!s.logo) return '<span class="league-emoji">' + s.emoji + "</span>";
+    return '<img class="league-logo ' + (cls || "") + '" src="' + s.logo + '" alt="' + s.name +
+      '" loading="lazy" onerror="this.outerHTML=\'<span class=league-emoji>' + s.emoji + '</span>\'" />';
+  },
 
   // shared game types offered for every sport
   games: [

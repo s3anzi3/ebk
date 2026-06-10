@@ -1,16 +1,21 @@
-/* EBK · Leaderboards — top scores per sport + game from Firestore. */
+/* EBK · Leaderboards — rankings from Firestore.
+   Categories: best run per sport+game, per-sport totals, per-game totals
+   (across sports), overall total, most games played. Totals = sum of a
+   player's best runs in each mode they've played. */
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var sportSel = $("#sport"), gameSel = $("#game"), board = $("#board"),
-      status = $("#status"), metricTh = $("#metric");
+  var catSel = $("#cat"), sportSel = $("#sport"), gameSel = $("#game"),
+      board = $("#board"), status = $("#status"), metricTh = $("#metric");
 
   var METRIC = { "higher-lower": "Best streak", "stat-line": "Best score",
                  "career-path": "Best score", "player-grid": "Best (of 9)" };
 
   function liveSports() { return EBK.sports.filter(function (s) { return EBK.sportLive(s.key); }); }
   function liveGames(sport) {
-    return EBK.games.filter(function (g) { return g.slug !== "team" && EBK.isLive(sport, g.slug); });
+    return EBK.games.filter(function (g) {
+      return g.slug !== "team" && (!sport || EBK.isLive(sport, g.slug));
+    });
   }
 
   function fillSports() {
@@ -19,31 +24,58 @@
     }).join("");
   }
   function fillGames() {
-    var sport = sportSel.value;
+    var sport = catSel.value === "game" ? sportSel.value : null;
     gameSel.innerHTML = liveGames(sport).map(function (g) {
       return '<option value="' + g.slug + '">' + g.title + "</option>";
     }).join("");
   }
 
+  function applyCat() {
+    var cat = catSel.value;
+    $("#sport-field").style.display = (cat === "game" || cat === "sport") ? "" : "none";
+    $("#game-field").style.display = (cat === "game" || cat === "game-all") ? "" : "none";
+    fillGames();
+    load();
+  }
+
+  function rowHTML(r, i, me, valueOf) {
+    var mine = me && r.uid === me;
+    var rep = mine ? "" : ' <button class="rep-btn" title="Report name" data-uid="' +
+      esc(r.uid || "") + '" data-name="' + esc(r.name || "") + '">⚑</button>';
+    var v = valueOf(r);
+    return "<tr" + (mine ? ' style="background:rgba(61,220,151,0.12)"' : "") + "><td>" + (i + 1) +
+      '</td><td class="pname">' + esc(r.name || "Player") + rep +
+      "</td><td>" + (v != null ? Number(v).toLocaleString() : "—") +
+      "</td><td>" + (r.plays || 0) + "</td></tr>";
+  }
+
   function load() {
-    var sport = sportSel.value, game = gameSel.value;
-    metricTh.textContent = METRIC[game] || "Best";
+    var cat = catSel.value, sport = sportSel.value, game = gameSel.value;
     board.innerHTML = "";
     status.textContent = "Loading…";
     if (!window.EBKF) { status.textContent = "Connecting…"; return setTimeout(load, 200); }
-    EBKF.leaderboard(sport, game, 100).then(function (rows) {
+
+    var p, valueOf;
+    if (cat === "game") {
+      metricTh.textContent = METRIC[game] || "Best";
+      valueOf = function (r) { return r.best; };
+      p = EBKF.leaderboard(sport, game, 100);
+    } else {
+      var field = cat === "sport" ? "s_" + sport
+        : cat === "game-all" ? EBKF.gameField(game)
+        : cat === "plays" ? "plays" : "overall";
+      metricTh.textContent = cat === "plays" ? "Games played" : "Total";
+      valueOf = function (r) { return r[field]; };
+      p = EBKF.topTotals(field, 100).then(function (rows) {
+        return rows.filter(function (r) { return (r[field] || 0) > 0; });
+      });
+    }
+
+    p.then(function (rows) {
       var me = EBKF.user && EBKF.user.uid;
-      if (!rows.length) { status.textContent = "No scores yet — be the first to play!"; return; }
+      if (!rows.length) { status.textContent = "No scores here yet — be the first to play!"; return; }
       status.textContent = rows.length + " player" + (rows.length === 1 ? "" : "s");
-      board.innerHTML = rows.map(function (r, i) {
-        var mine = me && r.uid === me;
-        var rep = mine ? "" : ' <button class="rep-btn" title="Report name" data-uid="' +
-          esc(r.uid || "") + '" data-name="' + esc(r.name || "") + '">⚑</button>';
-        return "<tr" + (mine ? ' style="background:rgba(61,220,151,0.12)"' : "") + "><td>" + (i + 1) +
-          '</td><td class="pname">' + esc(r.name || "Player") + rep +
-          "</td><td>" + (r.best != null ? r.best.toLocaleString() : "—") +
-          "</td><td>" + (r.plays || 0) + "</td></tr>";
-      }).join("");
+      board.innerHTML = rows.map(function (r, i) { return rowHTML(r, i, me, valueOf); }).join("");
     }).catch(function (e) {
       status.textContent = "Leaderboards aren't available yet. " + (e && e.message ? "(" + e.message + ")" : "");
     });
@@ -61,7 +93,8 @@
       .catch(function () { alert("Couldn't submit the report — try again."); });
   });
 
-  fillSports(); fillGames(); load();
+  fillSports(); fillGames(); applyCat();
+  catSel.addEventListener("change", applyCat);
   sportSel.addEventListener("change", function () { fillGames(); load(); });
   gameSel.addEventListener("change", load);
   // refresh once auth resolves (to highlight the user's row)

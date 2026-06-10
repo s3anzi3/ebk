@@ -35,6 +35,23 @@
 .ebk-btn { width: 100%; margin-top: 14px; padding: 13px; border-radius: 12px; border: none; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: var(--fs-md); cursor: pointer; }
 .ebk-btn:active { transform: scale(0.98); }
 .ebk-google { background: var(--glass); color: var(--text); border: 1px solid var(--line); margin-top: 8px; }
+.ebk-namewrap { position: relative; }
+.ebk-namewrap[hidden] { display: none; }
+.ebk-avail { position: absolute; right: 12px; bottom: 13px; font-size: var(--fs-xs); font-weight: 800; pointer-events: none; }
+.ebk-avail.ok { color: var(--accent); }
+.ebk-avail.no { color: var(--lower); }
+.ebk-pwwrap { position: relative; }
+.ebk-pwwrap .ebk-field { padding-right: 44px; }
+.ebk-eye {
+  position: absolute; right: 6px; bottom: 6px; width: 34px; height: 34px;
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 1rem; border-radius: 8px;
+}
+.ebk-eye:hover { color: var(--text); }
+.ebk-consent { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; color: var(--muted); font-size: var(--fs-sm); cursor: pointer; }
+.ebk-consent[hidden] { display: none; }
+.ebk-consent input { margin-top: 3px; accent-color: var(--accent); }
+.ebk-consent a { color: var(--accent); text-decoration: underline; }
 .ebk-err { color: var(--lower); font-size: var(--fs-sm); min-height: 1.2em; margin-top: 8px; }
 .ebk-err.ok { color: var(--accent); }
 .ebk-forgot { display: block; margin: 10px auto 0; background: none; border: none; color: var(--muted); font-size: var(--fs-sm); cursor: pointer; text-decoration: underline; }

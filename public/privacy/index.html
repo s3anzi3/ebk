@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script src="/js/ebk-loader.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1c" />
+  <meta name="description" content="EBK privacy policy — what we collect, why, and your choices." />
+  <title>Privacy Policy · EBK</title>
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="wordmark" aria-label="EBK">E<span>B</span>K</span>
+      <span class="brand-sub">Elite Ball Knowledge</span>
+    </a>
+    <a class="header-tag" href="/">← Home</a>
+  </header>
+  <main>
+    <div class="wrap legal-page">
+      <h1>Privacy Policy</h1>
+      <p class="muted">Last updated: June 10, 2026</p>
+
+      <p>EBK ("Elite Ball Knowledge", "we", "us") is a free sports trivia arcade at
+        eliteballknowledge.web.app. This policy explains what information we handle and why.
+        Short version: we collect the minimum needed to run accounts and leaderboards, we don't
+        sell anything, and we don't run ads or third-party trackers.</p>
+
+      <h2>What we collect</h2>
+      <ul>
+        <li><strong>Account info.</strong> If you create an account: your email address, a display
+          name you choose, and a password (stored and secured by Firebase Authentication — we never
+          see your password).</li>
+        <li><strong>Gameplay data.</strong> Scores, best runs, and play counts per game, tied to
+          your account so leaderboards and your dashboard work.</li>
+        <li><strong>Reports.</strong> If you report a display name, we store the report, the name
+          reported, and your account id so we can review it.</li>
+        <li><strong>Local storage.</strong> Your best scores are also kept in your browser's
+          localStorage so the games work without an account. This data stays on your device.</li>
+      </ul>
+
+      <h2>What we don't collect</h2>
+      <p>No advertising identifiers, no third-party analytics, no selling or sharing of personal
+        data with marketers, no precise location. We don't knowingly collect personal information
+        from children under 13; if you believe a child has created an account, contact us and we
+        will delete it.</p>
+
+      <h2>What's public</h2>
+      <p>Your <strong>display name</strong> and your <strong>scores</strong> appear on public
+        leaderboards. Pick a display name you're comfortable showing publicly — your email address
+        is never shown to other players.</p>
+
+      <h2>Who processes your data</h2>
+      <p>EBK runs on Google Firebase (Hosting, Authentication, and Cloud Firestore). Google
+        processes data on our behalf under the
+        <a href="https://firebase.google.com/support/privacy">Firebase privacy terms</a>.
+        Player photos and team logos are loaded from the leagues' and ESPN's public image servers;
+        those requests are subject to those sites' own policies.</p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>You can play every game without an account.</li>
+        <li>You can request deletion of your account and its data at any time (see Contact below)
+          and we'll remove it.</li>
+        <li>You can clear your browser's localStorage to remove on-device scores.</li>
+      </ul>
+
+      <h2>Security</h2>
+      <p>Access to account data is restricted by Firebase security rules (you can only write your
+        own data), traffic is served over HTTPS, and score writes are validated and rate-limited.
+        No system is perfectly secure, but we keep the attack surface small: we never store your
+        password and we hold no payment information.</p>
+
+      <h2>Changes</h2>
+      <p>If this policy changes materially, we'll update this page and the date above.</p>
+
+      <h2>Contact</h2>
+      <p>Questions, or want your data deleted? Open an issue at
+        <a href="https://github.com/s3anzi3/ebk">github.com/s3anzi3/ebk</a> and we'll take care of it.</p>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <p>EBK · Elite Ball Knowledge</p>
+    <p class="legal-links"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+  </footer>
+</body>
+</html>

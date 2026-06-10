@@ -65,7 +65,7 @@
 .hero-cta:hover { transform: translateY(-2px); filter: brightness(1.07); }
 .hero-cta:active { transform: scale(0.97); }
 
-/* team logos travelling down a football field (turf + yard lines + hashmarks) */
+/* ---- sliding logo banners (home + every sport hub) -------------------- */
 .logo-strip {
   position: relative;
   display: flex;
@@ -76,21 +76,82 @@
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.45), var(--elev-2);
+  background: radial-gradient(110% 140% at 50% -30%, #1b2547, #0c1124 70%);
+}
+.logo-strip::before,
+.logo-strip::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; z-index: 1; }
+
+/* football field: turf + yard lines + hashmarks + sidelines */
+.strip-field {
   background:
     repeating-linear-gradient(90deg, transparent 0 118px, rgba(255,255,255,0.13) 118px 120px),
     repeating-linear-gradient(90deg, #114a2d 0 60px, #0e3f26 60px 120px);
 }
-/* solid sidelines top & bottom */
-.logo-strip::before,
-.logo-strip::after {
-  content: "";
-  position: absolute; left: 0; right: 0; height: 10px;
-  pointer-events: none; z-index: 1;
-  /* hashmark ticks */
+.strip-field::before,
+.strip-field::after {
+  height: 10px;
   background: repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,0.55) 18px 20px);
 }
-.logo-strip::before { top: 16px; box-shadow: 0 -9px 0 rgba(255,255,255,0.25); }
-.logo-strip::after { bottom: 16px; box-shadow: 0 9px 0 rgba(255,255,255,0.25); }
+.strip-field::before { top: 16px; box-shadow: 0 -9px 0 rgba(255,255,255,0.25); }
+.strip-field::after { bottom: 16px; box-shadow: 0 9px 0 rgba(255,255,255,0.25); }
+/* college variant: warmer turf */
+.strip-field.cfb {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 118px, rgba(255,255,255,0.13) 118px 120px),
+    repeating-linear-gradient(90deg, #2c5a1e 0 60px, #234d18 60px 120px);
+}
+
+/* hardwood court: planks + center line + circle */
+.strip-court {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 32px, rgba(255,255,255,0.35) 32px 34px, transparent 34px),
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.35) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+    repeating-linear-gradient(90deg, #7a4a26 0 46px, #6d401f 46px 92px, #76482a 92px 138px, #6a3e1d 138px 184px);
+}
+.strip-court::before { inset: 10px 0; border-top: 2px solid rgba(255,255,255,0.22); border-bottom: 2px solid rgba(255,255,255,0.22); }
+
+/* baseball: outfield grass mow-stripes + infield dirt arc */
+.strip-diamond {
+  background:
+    radial-gradient(130% 120% at 50% 135%, #9a6b3f 0 26%, transparent 27%),
+    repeating-linear-gradient(90deg, #1d5c33 0 64px, #175129 64px 128px);
+}
+.strip-diamond::after {
+  inset: auto 0 0;
+  height: 26px;
+  background: radial-gradient(120% 300% at 50% 100%, rgba(255,255,255,0.16), transparent 60%);
+}
+
+/* hockey rink: ice + red center line + blue lines + faceoff circle */
+.strip-ice {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 30px, rgba(58,118,222,0.55) 30px 32px, transparent 32px),
+    linear-gradient(90deg, transparent calc(50% - 2px), rgba(214,57,57,0.75) calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)),
+    linear-gradient(90deg, transparent calc(25% - 2px), rgba(58,118,222,0.65) calc(25% - 2px) calc(25% + 2px), transparent calc(25% + 2px)),
+    linear-gradient(90deg, transparent calc(75% - 2px), rgba(58,118,222,0.65) calc(75% - 2px) calc(75% + 2px), transparent calc(75% + 2px)),
+    linear-gradient(180deg, #dfe9f5, #c9d9ec);
+}
+.strip-ice::before { inset: 8px 0; border-top: 2px solid rgba(160,180,205,0.7); border-bottom: 2px solid rgba(160,180,205,0.7); }
+
+/* soccer pitch: mow stripes + halfway line + center circle */
+.strip-pitch {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 30px, rgba(255,255,255,0.4) 30px 32px, transparent 32px),
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,0.4) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+    repeating-linear-gradient(90deg, #1f7a3d 0 64px, #196833 64px 128px);
+}
+.strip-pitch::before { inset: 10px 0; border-top: 2px solid rgba(255,255,255,0.25); border-bottom: 2px solid rgba(255,255,255,0.25); }
+
+/* neutral multi-sport arena (home page) */
+.strip-arena {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 118px, rgba(255,255,255,0.05) 118px 120px),
+    radial-gradient(110% 150% at 50% -40%, #20294e, #0c1124 72%);
+}
+.strip-arena::before {
+  inset: 0;
+  background: radial-gradient(60% 120% at 50% 0%, rgba(255,255,255,0.08), transparent 60%);
+}
 
 .logo-track {
   position: relative; z-index: 2;
@@ -110,9 +171,43 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   transition: transform 0.15s ease;
 }
-.strip-logo img { width: 38px; height: 38px; object-fit: contain; display: block; }
+.strip-logo img {
+  width: 38px; height: 38px; object-fit: contain; display: block;
+  opacity: 0; transition: opacity 0.35s ease;
+}
+.strip-logo img.ld { opacity: 1; }
 .strip-logo:hover { transform: scale(1.16) translateY(-2px); }
+.strip-logo:active { transform: scale(1.16) translateY(-2px); }
+/* league "coin" leading each sport's run on the home marquee */
+.strip-logo.big {
+  width: 68px; height: 68px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.22), rgba(8,12,24,0.8));
+}
+.strip-logo.big img { width: 46px; height: 46px; }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* league logos in titles/cards (replacing emojis) */
+.league-logo {
+  width: 1.35em; height: 1.35em; object-fit: contain; vertical-align: -0.28em;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+.league-logo.xl { width: 1.15em; height: 1.15em; vertical-align: -0.18em; }
+.card-logo { display: block; height: 2.4rem; }
+.card-logo .league-logo { width: 2.4rem; height: 2.4rem; vertical-align: top; }
+.card-logo .league-emoji { font-size: 2.2rem; line-height: 1; }
+
+/* legal pages (/privacy, /terms) */
+.legal-page { max-width: 720px; padding-top: var(--sp-lg); padding-bottom: var(--sp-xl); }
+.legal-page h1 { font-size: var(--fs-xl); margin-bottom: 4px; }
+.legal-page h2 { font-size: var(--fs-lg); margin: var(--sp-lg) 0 var(--sp-xs); }
+.legal-page p, .legal-page li { color: var(--muted); line-height: 1.65; font-size: var(--fs-md); }
+.legal-page strong { color: var(--text); }
+.legal-page a { color: var(--accent); text-decoration: underline; }
+
+.legal-links { margin-top: 6px; }
+.legal-links a { color: var(--muted); text-decoration: underline; }
+.legal-links a:hover { color: var(--accent); }
 
 /* sport section */
 .sport, .sport-section { margin: var(--sp-lg) 0; }
@@ -177,6 +272,13 @@
   transform: translateY(-5px);
   border-color: var(--accent);
   background: var(--glass-strong);
+}
+/* while the 3D tilt follows the pointer, don't ease the transform */
+.game-card.tilting { transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+/* touch press feedback (hover doesn't exist on touch) */
+@media (hover: none) {
+  .game-card.live:active { transform: scale(0.97); border-color: var(--accent); background: var(--glass-strong); }
+  .team-tile:active { transform: scale(0.96); border-color: var(--accent); }
 }
 .game-card.live::before {
   content: "";

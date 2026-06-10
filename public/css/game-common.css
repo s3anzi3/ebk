@@ -40,6 +40,21 @@
 .gscore .chip .v.pop { animation: gpop var(--dur-slow) var(--ease-spring); }
 @keyframes gpop { 0%{transform:scale(1)} 40%{transform:scale(1.4);color:var(--accent)} 100%{transform:scale(1)} }
 
+/* round timer / shot clock (stat-line, career-path, player-grid) */
+.round-timer {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 0 0 var(--sp-md);
+}
+.round-timer .fill {
+  height: 100%; width: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.round-timer .fill.low { background: var(--lower); }
+
 /* centered content */
 .gwrap {
   flex: 1;
@@ -179,7 +194,14 @@
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .gcell:hover:not(.filled):not(.dead) { border-color: var(--accent); }
+.gcell:active:not(.filled):not(.dead) { transform: scale(0.96); }
 .gcell.filled { cursor: default; background: rgba(61,220,151,0.12); border-color: rgba(61,220,151,0.4); }
+/* 3D flip when a square resolves */
+@keyframes cellFlip {
+  from { transform: perspective(600px) rotateY(88deg); opacity: 0.3; }
+  to   { transform: perspective(600px) rotateY(0deg); opacity: 1; }
+}
+.gcell.just { animation: cellFlip 0.45s var(--ease) both; }
 .gcell.dead { cursor: default; opacity: 0.5; }
 .gcell .cell-name { font-weight: 700; font-size: 0.72rem; line-height: 1.1; }
 .gcell .cell-meta { color: var(--muted); font-size: 0.6rem; }

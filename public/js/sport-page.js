@@ -11,7 +11,8 @@
   var titleEl = document.getElementById("sport-title");
   var tagEl = document.getElementById("sport-tag");
   var grid = document.getElementById("games");
-  if (titleEl) titleEl.innerHTML = S.emoji + " " + S.name;
+  if (titleEl) titleEl.innerHTML =
+    (EBK.logoTag ? EBK.logoTag(S, "xl") : S.emoji) + " <span>" + S.name + "</span>";
   if (tagEl) {
     tagEl.textContent = EBK.sportLive(key)
       ? "Pick a game and prove your knowledge."

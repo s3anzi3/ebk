@@ -37,15 +37,44 @@ CATEGORIES = [
 ]
 
 
-def fetch(name):
+def fetch(name, base=None):
     os.makedirs(RAW, exist_ok=True)
     cache = os.path.join(RAW, name)
     if not (os.path.exists(cache) and os.path.getsize(cache) > 0):
-        req = urllib.request.Request(BASE + "/" + name, headers={"User-Agent": "ebk/1.0"})
+        req = urllib.request.Request((base or BASE) + "/" + name, headers={"User-Agent": "ebk/1.0"})
         with urllib.request.urlopen(req, timeout=120) as r, open(cache, "wb") as f:
             f.write(r.read())
     with open(cache, encoding="utf-8") as f:
         return list(csv.DictReader(f))
+
+
+# Chadwick register: maps bbref/Lahman playerIDs -> MLBAM ids (for headshots).
+REGISTER = "https://raw.githubusercontent.com/chadwickbureau/register/master/data"
+
+def mlbam_map(first_year):
+    out = {}
+    for h in "0123456789abcdef":
+        for r in fetch_register(h):
+            bbref, mlbam = r.get("key_bbref"), r.get("key_mlbam")
+            last = r.get("mlb_played_last")
+            if bbref and mlbam and last and int(last) >= first_year:
+                out[bbref] = mlbam
+    return out
+
+def fetch_register(h):
+    os.makedirs(RAW, exist_ok=True)
+    cache = os.path.join(RAW, "register-people-%s.csv" % h)
+    if not (os.path.exists(cache) and os.path.getsize(cache) > 0):
+        url = REGISTER + "/people-%s.csv" % h
+        req = urllib.request.Request(url, headers={"User-Agent": "ebk/1.0"})
+        with urllib.request.urlopen(req, timeout=180) as r, open(cache, "wb") as f:
+            f.write(r.read())
+    with open(cache, encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+HEADSHOT = ("https://img.mlbstatic.com/mlb-photos/image/upload/"
+            "d_people:generic:headshot:67:current.png/w_213,q_auto:best/"
+            "v1/people/{}/headshot/67/current.png")
 
 
 def num(x):
@@ -55,6 +84,8 @@ def num(x):
 
 def build():
     start, end = (int(sys.argv[1]), int(sys.argv[2])) if len(sys.argv) == 3 else (FIRST, LAST)
+    mlbam = mlbam_map(start)
+    print(f"Chadwick register: {len(mlbam):,} bbref->MLBAM ids (mlb_played_last >= {start})")
     teamFranch = {r["teamID"]: r["franchID"] for r in fetch("Teams.csv")}
     people = {}
     for r in fetch("People.csv"):
@@ -121,11 +152,14 @@ def build():
             cat_counts[c] += 1
         games = int((b["G"] if b else 0) if not isPitcher else (p["G"] if p else 0))
         pos = "P" if isPitcher else (primary_pos(k) or "DH")
-        players.append({
+        rec = {
             "id": pid, "name": people.get(pid, pid),
             "pos": pos, "grp": "P" if isPitcher else "H",
             "season": yr, "team": franch, "games": games, "stats": stats,
-        })
+        }
+        if pid in mlbam:
+            rec["headshot"] = HEADSHOT.format(mlbam[pid])
+        players.append(rec)
 
     players.sort(key=lambda r: (r["season"], r["name"]))
     out = {

@@ -93,9 +93,67 @@
     rows: [], cols: [],
     cells: [],        // 9 cell states: null | {idx} | 'dead'
     used: new Set(),  // used player ids
-    attempts: 0, score: 0, best: 0, active: null, // active = cell index being guessed
+    entries: 9, score: 0, best: 0, active: null, // active = cell index being guessed
+    over: false, lastIdx: null,
     acItems: [],
   };
+
+  const ENTRIES = 9;        // every guess — right, wrong or timed out — costs one
+  const SHOT_MS = 20000;    // shot clock per entry
+
+  // ---- shot clock ----
+  let rtTO = null, rtLowTO = null, rtEl = null;
+  function rtBar() {
+    if (rtEl) return rtEl;
+    rtEl = document.createElement("div");
+    rtEl.className = "round-timer";
+    rtEl.innerHTML = '<div class="fill"></div>';
+    $("#game").prepend(rtEl);
+    return rtEl;
+  }
+  function rtStart() {
+    const fill = $(".fill", rtBar());
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    fill.classList.remove("low");
+    fill.style.transition = "none";
+    fill.style.width = "100%";
+    void fill.offsetWidth;
+    fill.style.transition = `width ${SHOT_MS}ms linear`;
+    fill.style.width = "0%";
+    rtLowTO = setTimeout(() => { if (!S.over) fill.classList.add("low"); }, SHOT_MS - 5000);
+    rtTO = setTimeout(shotClockOut, SHOT_MS);
+  }
+  function rtStop() {
+    clearTimeout(rtTO); clearTimeout(rtLowTO);
+    if (!rtEl) return;
+    const fill = $(".fill", rtEl);
+    fill.style.transition = "none";
+    fill.style.width = getComputedStyle(fill).width;
+  }
+
+  function shotClockOut() {
+    if (S.over) return;
+    if (S.active != null) closeModal();
+    flash("⏱ Shot clock! That entry is gone.", false);
+    consumeEntry();
+  }
+
+  function setEntries(n) {
+    S.entries = n;
+    const el = $("#entries");
+    if (el) {
+      el.textContent = n;
+      el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+    }
+  }
+
+  // an entry was used (guess or timeout) — end the game or rearm the clock
+  function consumeEntry() {
+    setEntries(S.entries - 1);
+    const resolved = S.cells.filter((c) => c !== null).length;
+    if (S.entries <= 0 || resolved >= 9) finish();
+    else rtStart();
+  }
 
   const normPos = (p) => (p === "FB" || p === "HB" ? "RB" : p);
   const getBest = () => { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } };
@@ -111,6 +169,14 @@
       buildCriteria();
       S.best = getBest();
       $("#best").textContent = S.best;
+      // entries-left chip in the header
+      const gs = document.querySelector(".gscore");
+      if (gs && !$("#entries")) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = '<span class="k">Entries</span><span class="v" id="entries">9</span>';
+        gs.insertBefore(chip, gs.firstChild);
+      }
       $("#loading").hidden = true;
       $("#game").hidden = false;
       newGrid();
@@ -199,12 +265,14 @@
     S.rows = g.rows; S.cols = g.cols;
     S.cells = Array(9).fill(null);
     S.used = new Set();
-    S.attempts = 0; S.score = 0;
+    S.score = 0; S.over = false; S.lastIdx = null;
+    setEntries(ENTRIES);
     $("#score").textContent = "0";
     $("#banner").textContent = ""; $("#banner").className = "banner";
     $("#end-row").hidden = true; $("#end-row").innerHTML = "";
-    $("#status-line").textContent = "Tap a square and name a player who fits both labels. One guess per square.";
+    $("#status-line").textContent = "9 entries, 20s on the shot clock. Right, wrong or too slow — each costs one.";
     render();
+    rtStart();
   }
 
   function critLabel(c) {
@@ -238,6 +306,7 @@
   function cellEl(idx, state) {
     const d = document.createElement("div");
     d.className = "gcell";
+    if (idx === S.lastIdx) { d.classList.add("just"); S.lastIdx = null; }
     if (state && state.idx != null) {
       d.classList.add("filled");
       const p = S.R[state.idx];
@@ -247,7 +316,7 @@
       d.innerHTML = `<div class="cell-plus">✕</div>`;
     } else {
       d.innerHTML = `<div class="cell-plus">＋</div>`;
-      d.addEventListener("click", () => openModal(idx));
+      d.addEventListener("click", () => { if (!S.over) openModal(idx); });
     }
     return d;
   }
@@ -291,12 +360,11 @@
   }
 
   function submitGuess(p) {
-    if (S.active == null) return;
+    if (S.active == null || S.over) return;
     if (S.used.has(p.id)) { $("#m-msg").textContent = `${p.name} is already on the grid — pick another.`; return; }
     const idx = S.active;
     const r = S.rows[(idx / 3) | 0], c = S.cols[idx % 3];
     const ok = satisfies(p, r) && satisfies(p, c);
-    S.attempts++;
     if (ok) {
       const i = S.R.indexOf(p);
       S.cells[idx] = { idx: i };
@@ -308,10 +376,11 @@
     } else {
       S.cells[idx] = "dead";
     }
+    S.lastIdx = idx;
     closeModal();
     render();
     flash(ok ? `✓ ${p.name} fits!` : `✕ ${p.name} doesn't fit that square.`, ok);
-    if (S.attempts >= 9) finish();
+    consumeEntry();
   }
 
   function flash(msg, good) {
@@ -319,8 +388,9 @@
   }
 
   function finish() {
+    S.over = true;
+    rtStop();
     ebkRecord(S.score);
-    const left = 9 - S.score;
     $("#status-line").textContent = `Grid complete — ${S.score}/9 squares filled.`;
     flash(S.score === 9 ? "Immaculate! 9/9 🎉" : `You filled ${S.score}/9.`, S.score >= 5);
     const row = $("#end-row"); row.hidden = false; row.innerHTML = "";
