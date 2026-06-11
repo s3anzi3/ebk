@@ -26,7 +26,7 @@
     '<div class="ebk-namewrap" hidden>' +
     '<input class="ebk-field" id="ebk-name" placeholder="Display name (public)" autocomplete="nickname" maxlength="20" />' +
     '<span class="ebk-avail" id="ebk-avail"></span></div>' +
-    '<input class="ebk-field" id="ebk-email" type="email" placeholder="Email" autocomplete="email" />' +
+    '<input class="ebk-field" id="ebk-email" type="text" placeholder="Email or username" autocomplete="username" />' +
     '<div class="ebk-pwwrap">' +
     '<input class="ebk-field" id="ebk-pw" type="password" placeholder="Password" autocomplete="current-password" />' +
     '<button class="ebk-eye" data-act="eye" type="button" aria-label="Show password">👁</button></div>' +
@@ -59,6 +59,9 @@
     forgotBtn.hidden = m === "up";
     submitBtn.textContent = m === "up" ? "Create account" : "Sign in";
     pwF.autocomplete = m === "up" ? "new-password" : "current-password";
+    emailF.placeholder = m === "up" ? "Email" : "Email or username";
+    emailF.type = m === "up" ? "email" : "text";
+    emailF.autocomplete = m === "up" ? "email" : "username";
   }
 
   // live display-name availability (debounced)
@@ -93,6 +96,7 @@
     var email = emailF.value.trim();
     clearMsg();
     if (!email) { errEl.textContent = "Enter your email above first, then tap Forgot password."; return; }
+    if (email.indexOf("@") === -1) { errEl.textContent = "Password resets need your email address, not your username."; return; }
     errEl.textContent = "…";
     EBKF.resetPassword(email).then(function () {
       errEl.classList.add("ok");
@@ -125,6 +129,9 @@
     if (c === "ebk/name-short") return "Display name must be at least 2 characters.";
     if (c === "ebk/name-long") return "Display name must be 20 characters or fewer.";
     if (c === "ebk/name-invalid") return "Use letters, numbers, spaces and emoji only.";
+    if (c === "ebk/no-user") return "No account with that username.";
+    if (c === "ebk/bad-credentials") return "Wrong username or password.";
+    if (c === "ebk/login-not-setup") return "Username sign-in isn't enabled yet for this account — sign in with your email once to turn it on.";
     if (c.indexOf("wrong-password") > -1 || c.indexOf("invalid-credential") > -1) return "Wrong email or password.";
     if (c.indexOf("email-already") > -1) return "That email already has an account — sign in.";
     if (c.indexOf("weak-password") > -1) return "Password should be at least 6 characters.";

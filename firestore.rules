@@ -28,14 +28,20 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
 
-    // unique display-name registry (create-only / update-denied => atomic uniqueness)
+    // unique display-name registry. lc/iv = the account email encrypted with
+    // the user's password (enables username sign-in; unreadable without it).
+    // uid/name immutable after create => uniqueness claims stay atomic.
     match /usernames/{nameKey} {
       allow read: if true;
       allow create: if isAdmin() || (signedIn()
         && request.resource.data.uid == request.auth.uid
         && nameKey.size() >= 2 && nameKey.size() <= 40
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'created']));
-      allow update: if false;
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'created', 'lc', 'iv']));
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lc', 'iv'])
+        && request.resource.data.lc is string && request.resource.data.lc.size() <= 400
+        && request.resource.data.iv is string && request.resource.data.iv.size() <= 40);
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 

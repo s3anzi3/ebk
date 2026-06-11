@@ -98,6 +98,44 @@
     return null;
   }
 
+  // ---- username sign-in support ----
+  // The usernames doc carries the account email encrypted with a key derived
+  // from the user's password (PBKDF2 -> AES-GCM). Username + password can
+  // recover the email client-side for Firebase sign-in; without the password
+  // the stored blob reveals nothing.
+  function b64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+  function ub64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
+  async function pwKey(pw, nameKey) {
+    var enc = new TextEncoder();
+    var km = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: enc.encode("ebk-login|" + nameKey), iterations: 120000, hash: "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+  async function encLogin(pw, nameKey, email) {
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var key = await pwKey(pw, nameKey);
+    var ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(email));
+    return { lc: b64(ct), iv: b64(iv) };
+  }
+  async function decLogin(pw, nameKey, doc) {
+    var key = await pwKey(pw, nameKey);
+    var pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ub64(doc.iv) }, key, ub64(doc.lc));
+    return new TextDecoder().decode(pt);
+  }
+  // (re)attach the encrypted email to the user's username doc — keeps
+  // username sign-in working after password resets or renames
+  async function refreshLoginCipher(user, pw) {
+    try {
+      var name = EBKF.profileName || user.displayName;
+      if (!name || !pw) return;
+      var key = nameKeyOf(name);
+      var blob = await encLogin(pw, key, user.email);
+      await EBKF.db.collection("usernames").doc(key)
+        .update({ lc: blob.lc, iv: blob.iv });
+    } catch (e) {}
+  }
+
   EBKF.nameAvailable = async function (name) {
     await EBKF.ready;
     var key = nameKeyOf(name);
@@ -119,8 +157,14 @@
 
     var c = await EBKF.auth.createUserWithEmailAndPassword(email, pw);
     try {
-      // atomic claim: a second user claiming the same key hits update(=denied)
-      await EBKF.db.collection("usernames").doc(key).set({ uid: c.user.uid, name: name, created: Date.now() });
+      // atomic claim: a second user claiming the same key hits update(=denied).
+      // lc/iv = email encrypted with the password, enabling username sign-in.
+      var reg = { uid: c.user.uid, name: name, created: Date.now() };
+      try {
+        var blob = await encLogin(pw, key, email);
+        reg.lc = blob.lc; reg.iv = blob.iv;
+      } catch (e) {}
+      await EBKF.db.collection("usernames").doc(key).set(reg);
     } catch (err) {
       try { await c.user.delete(); } catch (e) {}
       throw nameErr("ebk/name-taken", "That display name was just taken — try another.");
@@ -133,9 +177,29 @@
     try { c.user.sendEmailVerification(); } catch (e) {}
     return c.user;
   };
-  EBKF.signIn = async function (email, pw) {
+  // accepts an email or a display name as the identifier
+  EBKF.signIn = async function (idOrEmail, pw) {
     await EBKF.ready;
-    return (await EBKF.auth.signInWithEmailAndPassword(email, pw)).user;
+    idOrEmail = (idOrEmail || "").trim();
+    if (idOrEmail.indexOf("@") > -1) {
+      var u = (await EBKF.auth.signInWithEmailAndPassword(idOrEmail, pw)).user;
+      refreshLoginCipher(u, pw);          // keep username sign-in current
+      return u;
+    }
+    // username path: decrypt the stored email with the password, then sign in
+    var key = nameKeyOf(idOrEmail);
+    var d = await EBKF.db.collection("usernames").doc(key).get();
+    if (!d.exists) throw nameErr("ebk/no-user", "No account with that username.");
+    var data = d.data();
+    if (!data.lc || !data.iv)
+      throw nameErr("ebk/login-not-setup",
+        "Username sign-in isn't enabled for this account yet — sign in with your email once to turn it on.");
+    var email;
+    try { email = await decLogin(pw, key, data); }
+    catch (e) { throw nameErr("ebk/bad-credentials", "Wrong username or password."); }
+    var user = (await EBKF.auth.signInWithEmailAndPassword(email, pw)).user;
+    refreshLoginCipher(user, pw);
+    return user;
   };
   EBKF.signInGoogle = async function () {
     await EBKF.ready;
