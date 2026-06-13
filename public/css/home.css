@@ -43,6 +43,7 @@
 }
 /* "elite" cycles through ball skins — stacked copies of the word cross-fade,
    easing in and out, over the always-present green base so it stays readable */
+.hero-name { color: var(--accent); }
 .elite-cycle { position: relative; display: inline-block; }
 .elite-base,
 .elite-skin {

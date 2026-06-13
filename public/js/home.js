@@ -2,6 +2,21 @@
 (function () {
   "use strict";
 
+  // ---- greet the player by name in the headline (else "guest")
+  (function () {
+    var el = document.getElementById("hero-name");
+    if (!el) return;
+    function set(user) {
+      var nm = user ? ((window.EBKF && EBKF.profileName) || user.displayName || "Player") : "guest";
+      el.textContent = nm;
+    }
+    var tick = function () {
+      if (window.EBKF && EBKF.onChange) EBKF.onChange(set);
+      else setTimeout(tick, 80);
+    };
+    tick();
+  })();
+
   // ---- all-sports marquee: each league logo leads a run of its team logos
   (function () {
     var strip = document.getElementById("logo-strip");
