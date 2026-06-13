@@ -153,19 +153,24 @@
       nav.innerHTML =
         '<a class="ebk-admin-link" href="/admin" hidden>Admin</a>' +
         '<a href="/leaderboard">Leaderboard</a>' +
-        '<a href="/dashboard">Dashboard</a>' +
+        '<a class="ebk-dash-link" href="/dashboard">Dashboard</a>' +
         '<span class="ebk-acct"></span>';
       h.appendChild(nav);
     });
     renderAccount(window.EBKF && EBKF.user);
   }
+  function esc(s) { return String(s).replace(/[<>&"']/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function renderAccount(user) {
     var admin = !!(window.EBKF && EBKF.isAdmin && EBKF.isAdmin());
     document.querySelectorAll(".ebk-admin-link").forEach(function (el) { el.hidden = !admin; });
+    // when signed in, the name chip links to the dashboard, so hide the
+    // redundant "Dashboard" text link to keep the header uncluttered
+    document.querySelectorAll(".ebk-dash-link").forEach(function (el) { el.hidden = !!user; });
     document.querySelectorAll(".ebk-acct").forEach(function (el) {
       if (user) {
-        el.innerHTML = '<span class="ebk-user"><span class="nm">' +
-          (user.displayName || "Player") + '</span><button class="ebk-out">Sign out</button></span>';
+        var nm = (window.EBKF && EBKF.profileName) || user.displayName || "Player";
+        el.innerHTML = '<a class="ebk-user" href="/dashboard" title="Your dashboard">' +
+          '<span class="nm">' + esc(nm) + "</span></a>";
       } else {
         el.innerHTML = '<button class="ebk-signin">Sign in</button>';
       }

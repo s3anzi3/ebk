@@ -91,6 +91,11 @@
       });
   });
 
+  $("#acct-signout") && $("#acct-signout").addEventListener("click", function () {
+    EBKF.signOut().then(function () { location.href = "/"; })
+      .catch(function () { location.href = "/"; });
+  });
+
   $("#acct-verify") && $("#acct-verify").addEventListener("click", function () {
     msg("Sending…");
     EBKF.resendVerification()

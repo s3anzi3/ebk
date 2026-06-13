@@ -11,7 +11,13 @@
   padding: 7px 14px; border-radius: 999px; font-weight: 800; font-size: var(--fs-sm); cursor: pointer;
 }
 .ebk-signin:hover { border-color: var(--accent); }
-.ebk-user { display: inline-flex; align-items: center; gap: 8px; }
+.ebk-user {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--glass);
+}
+.ebk-user::before { content: "\1F464"; font-size: 0.9em; opacity: 0.8; }
+.ebk-user:hover { border-color: var(--accent); }
 .ebk-user .nm { color: var(--accent); font-weight: 800; }
 
 .ebk-modal-back {
