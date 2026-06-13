@@ -5,7 +5,7 @@
   <script src="/js/ebk-loader.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0e1c" />
-  <meta name="description" content="EBK privacy policy — what we collect, why, and your choices." />
+  <meta name="description" content="EBK privacy policy — what we collect, how we use it, your rights, and your choices." />
   <title>Privacy Policy · EBK</title>
   <link rel="icon" type="image/svg+xml" href="/img/icon.svg" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="32x32" />
@@ -23,64 +23,138 @@
   <main>
     <div class="wrap legal-page">
       <h1>Privacy Policy</h1>
-      <p class="muted">Last updated: June 10, 2026</p>
+      <p class="muted updated">Last updated: June 13, 2026</p>
 
-      <p>EBK ("Elite Ball Knowledge", "we", "us") is a free sports trivia arcade at
-        eliteballknowledge.web.app. This policy explains what information we handle and why.
-        Short version: we collect the minimum needed to run accounts and leaderboards, we don't
-        sell anything, and we don't run ads or third-party trackers.</p>
+      <p class="lead">EBK ("Elite Ball Knowledge", "we", "us", "our") runs a free sports trivia
+        arcade at eliteballknowledge.web.app (the "Service"). This policy explains, in plain
+        language, what information we collect, how we use it, who we share it with, and the choices
+        and rights you have. The short version: we collect only what we need to run accounts and
+        leaderboards, we do not sell your data, and we run no advertising or third-party tracking.</p>
 
-      <h2>What we collect</h2>
+      <nav class="legal-toc" aria-label="Contents">
+        <ol>
+          <li><a href="#collect">Data Collection</a></li>
+          <li><a href="#use">Data Usage</a></li>
+          <li><a href="#cookies">Cookies and Tracking</a></li>
+          <li><a href="#sharing">Third-Party Sharing</a></li>
+          <li><a href="#rights">Your Rights (GDPR / CCPA)</a></li>
+          <li><a href="#retention">Data Retention</a></li>
+          <li><a href="#children">Children's Privacy</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#changes">Changes</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="collect">1. Data Collection</h2>
+      <p>We collect the following, and nothing more than we need:</p>
       <ul>
-        <li><strong>Account info.</strong> If you create an account: your email address, a display
-          name you choose, and a password (stored and secured by Firebase Authentication — we never
-          see your password).</li>
-        <li><strong>Gameplay data.</strong> Scores, best runs, and play counts per game, tied to
-          your account so leaderboards and your dashboard work.</li>
+        <li><strong>Account information.</strong> When you create an account: your email address, a
+          display name you choose, and a password. Your password is handled and secured by Firebase
+          Authentication. We never see or store your plaintext password.</li>
+        <li><strong>Username sign-in data.</strong> So you can sign in with your display name instead
+          of your email, we store your email address encrypted with a key derived from your own
+          password. Without your password, this stored value cannot be read by us or anyone else.</li>
+        <li><strong>Gameplay data.</strong> Scores, best runs, play counts, daily grid results, and
+          per-game statistics, tied to your account so leaderboards and your dashboard work.</li>
         <li><strong>Reports.</strong> If you report a display name, we store the report, the name
-          reported, and your account id so we can review it.</li>
-        <li><strong>Local storage.</strong> Your best scores are also kept in your browser's
-          localStorage so the games work without an account. This data stays on your device.</li>
+          reported, and your account identifier so we can review it.</li>
+        <li><strong>On-device data.</strong> Best scores, sound settings, and similar preferences are
+          stored in your browser's local storage. This data stays on your device.</li>
+        <li><strong>Technical and log data.</strong> Our hosting provider (Google Firebase) records
+          standard server logs such as IP address, browser type, and timestamps, which we use for
+          security, abuse prevention, and reliability. We do not use this data to build advertising
+          or marketing profiles.</li>
       </ul>
 
-      <h2>What we don't collect</h2>
-      <p>No advertising identifiers, no third-party analytics, no selling or sharing of personal
-        data with marketers, no precise location. We don't knowingly collect personal information
-        from children under 13; if you believe a child has created an account, contact us and we
-        will delete it.</p>
-
-      <h2>What's public</h2>
-      <p>Your <strong>display name</strong> and your <strong>scores</strong> appear on public
-        leaderboards. Pick a display name you're comfortable showing publicly — your email address
-        is never shown to other players.</p>
-
-      <h2>Who processes your data</h2>
-      <p>EBK runs on Google Firebase (Hosting, Authentication, and Cloud Firestore). Google
-        processes data on our behalf under the
-        <a href="https://firebase.google.com/support/privacy">Firebase privacy terms</a>.
-        Player photos and team logos are loaded from the leagues' and ESPN's public image servers;
-        those requests are subject to those sites' own policies.</p>
-
-      <h2>Your choices</h2>
+      <h2 id="use">2. Data Usage</h2>
+      <p>We use your information only to operate and improve the Service:</p>
       <ul>
-        <li>You can play every game without an account.</li>
-        <li>You can request deletion of your account and its data at any time (see Contact below)
-          and we'll remove it.</li>
-        <li>You can clear your browser's localStorage to remove on-device scores.</li>
+        <li>Create and manage your account and keep you signed in.</li>
+        <li>Save your scores and power the public leaderboards and your personal dashboard.</li>
+        <li>Maintain fair play, review reports, and moderate display names.</li>
+        <li>Protect the Service through rate limiting and abuse prevention.</li>
+        <li>Send essential account emails, such as email verification and password resets.</li>
+      </ul>
+      <p>We do not sell your personal data, and we do not use it for third-party advertising.</p>
+
+      <h2 id="cookies">3. Cookies and Tracking</h2>
+      <ul>
+        <li>We do not use advertising cookies, analytics cookies, or third-party tracking pixels.</li>
+        <li>We use your browser's local storage and the authentication tokens set by Firebase
+          (stored locally on your device) to keep you signed in and remember your preferences and
+          scores. These are strictly necessary for the Service to function.</li>
+        <li>We do not track you across other websites or services.</li>
       </ul>
 
-      <h2>Security</h2>
-      <p>Access to account data is restricted by Firebase security rules (you can only write your
-        own data), traffic is served over HTTPS, and score writes are validated and rate-limited.
-        No system is perfectly secure, but we keep the attack surface small: we never store your
-        password and we hold no payment information.</p>
+      <h2 id="sharing">4. Third-Party Sharing</h2>
+      <p>We do not sell or rent your personal data. We share data only in these limited cases:</p>
+      <ul>
+        <li><strong>Service providers.</strong> Google Firebase (Hosting, Authentication, and Cloud
+          Firestore) processes data on our behalf to run the Service, under the
+          <a href="https://firebase.google.com/support/privacy">Firebase privacy terms</a>.</li>
+        <li><strong>Public image servers.</strong> Player photos and team logos load from public
+          sources (such as league sites and ESPN). Your browser requests those images directly, so
+          those requests are subject to the relevant site's own policies.</li>
+        <li><strong>Legal and safety.</strong> We may disclose information if required by law, or to
+          protect the rights, safety, or property of EBK, our users, or the public.</li>
+        <li><strong>Public by design.</strong> Your display name and your scores appear on public
+          leaderboards. Your email address is never shown to other players.</li>
+      </ul>
 
-      <h2>Changes</h2>
-      <p>If this policy changes materially, we'll update this page and the date above.</p>
+      <h2 id="rights">5. Your Rights (GDPR / CCPA)</h2>
+      <p>Wherever you live, we extend the following rights to you:</p>
+      <ul>
+        <li><strong>Access</strong> the personal data we hold about you.</li>
+        <li><strong>Correct</strong> inaccurate data (for example, change your display name in your
+          dashboard).</li>
+        <li><strong>Delete</strong> your account and associated data at any time.</li>
+        <li><strong>Export / portability</strong>: request a copy of your account data.</li>
+        <li><strong>Object to or restrict</strong> certain processing.</li>
+      </ul>
+      <p>If you are in the European Economic Area or the UK, the GDPR gives you these rights, and you
+        may also lodge a complaint with your local data protection authority. If you are a California
+        resident, the CCPA/CPRA gives you the right to know, delete, correct, and to not be
+        discriminated against for exercising your rights. Because <strong>we do not sell or share
+        personal information for advertising</strong>, there is nothing to opt out of on that front,
+        but you may still delete your data at any time. To exercise any right, use the tools in your
+        dashboard or contact us (see Contact). We will not charge you or deny you service for making
+        a request.</p>
 
-      <h2>Contact</h2>
-      <p>Questions, or want your data deleted? Open an issue at
-        <a href="https://github.com/s3anzi3/ebk">github.com/s3anzi3/ebk</a> and we'll take care of it.</p>
+      <h2 id="retention">6. Data Retention</h2>
+      <ul>
+        <li>We keep your account data for as long as your account is active.</li>
+        <li>When you delete your account (from your dashboard), we remove your account, scores,
+          totals, daily-grid plays, and leaderboard entries. Residual copies in routine backups or
+          server logs expire on their normal cycle shortly afterward.</li>
+        <li>Aggregate counts used for features like daily-grid rarity may be retained in a form that
+          is not used to identify you personally.</li>
+      </ul>
+
+      <h2 id="children">7. Children's Privacy</h2>
+      <p>The Service is not directed to children under 13, and you must be at least 13 years old to
+        create an account. We do not knowingly collect personal information from children under 13.
+        If you believe a child under 13 has created an account, contact us and we will delete it
+        promptly.</p>
+
+      <h2 id="security">8. Security</h2>
+      <p>We keep the attack surface small: we never store plaintext passwords, your username-login
+        email is encrypted with your password, traffic is served over HTTPS, database access is
+        restricted by Firebase security rules, and score writes are validated and rate-limited. No
+        method of transmission or storage is ever completely secure, so we cannot guarantee absolute
+        security, but we work to protect your information.</p>
+
+      <h2 id="changes">9. Changes</h2>
+      <p>If we make material changes to this policy, we will update this page and the "Last updated"
+        date above. Continued use of the Service after changes take effect means you accept the
+        updated policy.</p>
+
+      <h2 id="contact">10. Contact</h2>
+      <p>Questions, or want to exercise a privacy right or delete your data? Open an issue at
+        <a href="https://github.com/s3anzi3/ebk">github.com/s3anzi3/ebk</a> and we will respond
+        promptly.</p>
+
+      <p class="muted">See also our <a href="/terms">Terms of Service</a>.</p>
     </div>
   </main>
   <footer class="site-footer">
